@@ -1,0 +1,117 @@
+{
+  "runtime": "Node VM with minimal DOM adapter; no real browser",
+  "subjects": 11,
+  "studyUnits": 61,
+  "ox": {
+    "previous": 183,
+    "basicAdded": 122,
+    "pastStatementsAdded": 1695,
+    "total": 2000
+  },
+  "five": {
+    "previous": 36,
+    "pastAdded": 349,
+    "total": 385
+  },
+  "originalPastExam": {
+    "mc": 350,
+    "essay": 10,
+    "notes": 108
+  },
+  "lawCards": 14,
+  "checks": [
+    "all scripts execute",
+    "old question prefixes and five-choice topics unchanged",
+    "all 61 units render",
+    "all source filters",
+    "1695 judgments match reviewed explanations",
+    "349 official answer mappings",
+    "349 origin navigation links",
+    "all 360 original questions render",
+    "read-only navigation leaves history unchanged",
+    "new answers append once and retain old history and custom fields",
+    "wrong-answer review preserves IDs"
+  ],
+  "limitations": [
+    "Real Chromium unavailable in sandbox; visual layout not verified"
+  ],
+  "subjectCounts": [
+    {
+      "subject": "民法",
+      "units": 16,
+      "ox": 655,
+      "addedOx": 532,
+      "five": 126
+    },
+    {
+      "subject": "不動産登記法",
+      "units": 11,
+      "ox": 408,
+      "addedOx": 402,
+      "five": 81
+    },
+    {
+      "subject": "商法・会社法",
+      "units": 7,
+      "ox": 240,
+      "addedOx": 234,
+      "five": 46
+    },
+    {
+      "subject": "商業登記法",
+      "units": 6,
+      "ox": 203,
+      "addedOx": 197,
+      "five": 40
+    },
+    {
+      "subject": "民事訴訟法",
+      "units": 4,
+      "ox": 139,
+      "addedOx": 133,
+      "five": 26
+    },
+    {
+      "subject": "民事執行法",
+      "units": 3,
+      "ox": 37,
+      "addedOx": 31,
+      "five": 6
+    },
+    {
+      "subject": "民事保全法",
+      "units": 3,
+      "ox": 37,
+      "addedOx": 31,
+      "five": 6
+    },
+    {
+      "subject": "憲法",
+      "units": 3,
+      "ox": 82,
+      "addedOx": 76,
+      "five": 16
+    },
+    {
+      "subject": "刑法",
+      "units": 3,
+      "ox": 77,
+      "addedOx": 71,
+      "five": 16
+    },
+    {
+      "subject": "供託法",
+      "units": 3,
+      "ox": 87,
+      "addedOx": 81,
+      "five": 16
+    },
+    {
+      "subject": "司法書士法",
+      "units": 2,
+      "ox": 35,
+      "addedOx": 29,
+      "five": 6
+    }
+  ]
+}
