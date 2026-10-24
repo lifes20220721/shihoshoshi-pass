@@ -1,0 +1,31 @@
+{
+  "version": "1.8",
+  "verified_at": "2026-10-24",
+  "runtime": "Node checks and headless Chromium at a localhost secure context",
+  "pwa": {
+    "manifest_loaded": true,
+    "manifest_errors": [],
+    "service_worker_active": true,
+    "page_controlled_by_service_worker": true,
+    "offline_reload": true,
+    "offline_status_displayed": true,
+    "local_storage_preserved_across_offline_reload": true,
+    "mobile_viewport_install_help_rendered": true
+  },
+  "installability": "No manifest or application errors. Headless Chromium reported only in-incognito, which is expected for its isolated test context.",
+  "preservation": {
+    "storage_key": "shihoshoshi-pass-v03",
+    "subjects": 11,
+    "study_units": 61,
+    "ox_questions": 2000,
+    "five_choice_questions": 385,
+    "original_multiple_choice_questions": 350,
+    "essay_questions": 10,
+    "case_notes": 22
+  },
+  "limitations": [
+    "Installation on a physical Android or iOS device has not yet been verified.",
+    "App Store and Google Play packages have not been created.",
+    "Past-exam PDFs and external sites are not part of the offline core cache."
+  ]
+}
