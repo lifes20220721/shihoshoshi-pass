@@ -20,7 +20,8 @@ html = html.replace(
     old_footer,
     '<nav aria-label="サイト情報" style="margin-top:12px;line-height:2">'
     '<a href="privacy.html">プライバシーポリシー</a>　'
-    '<a href="contact.html">運営・お問い合わせ</a>'
+    '<a href="contact.html">運営・お問い合わせ</a>　'
+    '<a href="sources.html">出典・利用について</a>'
     "</nav></footer>",
     1,
 )
