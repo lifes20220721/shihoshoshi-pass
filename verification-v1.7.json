@@ -1,0 +1,24 @@
+{
+  "version": "1.7",
+  "runtime": "Node VM with minimal DOM adapter",
+  "caseNotes": 22,
+  "issueGroups": 16,
+  "preservation": "all 2,000 OX, 385 five-choice and their topics exactly equal to v1.6; localStorage key and prior histories retained",
+  "readOnlyCaseNavigation": "zero history change",
+  "passed": [
+    "all case details render",
+    "all source URLs are source-verified courts pages",
+    "all issue frequency counts recomputed from normalized original question text",
+    "all case-to-question and case-to-text links work",
+    "keyword, subject, frequency and empty-result filters",
+    "deep links including invalid encoding and unknown IDs",
+    "OX explanation to case and return without losing answer state",
+    "five-choice explanation links and one history write",
+    "all inherited 61 unit and 360 original question checks"
+  ],
+  "limitations": [
+    "No real browser launched; smartphone layout remains unverified",
+    "Frequency counts related issue questions, not citations of each judgment",
+    "Keyword associations indicate related reading, not exhaustive legal case matching"
+  ]
+}
