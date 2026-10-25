@@ -1,0 +1,29 @@
+{
+  "version": "1.8.1",
+  "verified_at": "2026-10-25",
+  "runtime": "Node checks and headless Chromium at a localhost secure context",
+  "resume": {
+    "ox_close_and_reopen": "answered question 1, reopened, resumed at question 2",
+    "five_choice_close_and_reopen": "answered question 1, reopened, resumed at question 2",
+    "original_past_exam_close_and_reopen": "restored year, part, subject, selected original question and revealed explanation",
+    "answer_history": "one record per answer with no duplicate on resume",
+    "filter_restore": "topic and basic/past source settings retained in saved state",
+    "offline_resume": "service-worker-controlled page reopened offline and resumed at the next question",
+    "discard_position": "removes only shihoshoshi-pass-progress-v1"
+  },
+  "preservation": {
+    "history_storage_key": "shihoshoshi-pass-v03",
+    "progress_storage_key": "shihoshoshi-pass-progress-v1",
+    "subjects": 11,
+    "study_units": 61,
+    "ox_questions": 2000,
+    "five_choice_questions": 385,
+    "original_multiple_choice_questions": 350,
+    "essay_questions": 10,
+    "case_notes": 22
+  },
+  "browser_errors": [],
+  "limitations": [
+    "Physical Android and iOS device tests remain pending."
+  ]
+}
