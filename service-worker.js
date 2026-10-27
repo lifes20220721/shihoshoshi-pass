@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'shihoshoshi-pass-';
-const CACHE_NAME = CACHE_PREFIX + 'v181-core-1';
+const CACHE_NAME = CACHE_PREFIX + 'v182-core-1';
 const CORE_FILES = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ const CORE_FILES = [
   './sources.html',
   './manifest.webmanifest',
   './pwa-v1.8.js',
-  './resume-v1.8.1.js',
+  './resume-v1.8.2.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-512.png',

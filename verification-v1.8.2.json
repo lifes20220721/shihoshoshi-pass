@@ -1,0 +1,32 @@
+{
+  "version": "1.8.2",
+  "verified_at": "2026-10-27",
+  "runtime": "Node checks and headless Chromium at a localhost secure context",
+  "previous_question_navigation": {
+    "ox": "returned to the previous question with the recorded choice, result, explanation and links",
+    "five_choice": "returned to the previous question with the recorded result and explanation",
+    "original_past_exam": "returned to the previous item inside the active filter",
+    "first_question": "previous button disabled",
+    "last_original_question": "next button disabled",
+    "answer_history": "back navigation added no duplicate answer records",
+    "resume_then_back": "worked after closing and reopening for OX and five-choice",
+    "v1_8_1_progress_compatibility": "restored answered state from existing history when saved progress had no choices",
+    "offline": "service-worker-controlled page reopened offline, resumed, and returned to the previous answered question",
+    "mobile_viewport": "verified at 390 x 844 with no browser console errors"
+  },
+  "preservation": {
+    "history_storage_key": "shihoshoshi-pass-v03",
+    "progress_storage_key": "shihoshoshi-pass-progress-v1",
+    "subjects": 11,
+    "study_units": 61,
+    "ox_questions": 2000,
+    "five_choice_questions": 385,
+    "original_multiple_choice_questions": 350,
+    "essay_questions": 10,
+    "case_notes": 22
+  },
+  "browser_errors": [],
+  "limitations": [
+    "Physical Android and iOS device tests remain pending."
+  ]
+}
