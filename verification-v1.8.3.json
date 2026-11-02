@@ -1,0 +1,31 @@
+{
+  "version": "1.8.3",
+  "verified_at": "2026-11-02",
+  "runtime": "Node checks and headless Chromium at a localhost secure context",
+  "return_to_text": {
+    "library_to_ox": "returned to the same subject and unit text",
+    "dashboard_to_ox": "returned to the same subject and unit dashboard",
+    "dashboard_to_five_choice": "returned to the same subject and unit dashboard",
+    "ox_resume_then_return": "return target retained after closing and reopening",
+    "five_choice_resume_then_return": "return target retained after closing and reopening",
+    "direct_home_quiz": "return button hidden when the quiz was not opened from text",
+    "history": "return navigation did not add or remove answer records",
+    "offline": "service-worker-controlled page reopened offline and returned to the saved text",
+    "mobile_viewport": "verified at 390 x 844 with no browser console errors"
+  },
+  "preservation": {
+    "history_storage_key": "shihoshoshi-pass-v03",
+    "progress_storage_key": "shihoshoshi-pass-progress-v1",
+    "subjects": 11,
+    "study_units": 61,
+    "ox_questions": 2000,
+    "five_choice_questions": 385,
+    "original_multiple_choice_questions": 350,
+    "essay_questions": 10,
+    "case_notes": 22
+  },
+  "browser_errors": [],
+  "limitations": [
+    "Physical Android and iOS device tests remain pending."
+  ]
+}
