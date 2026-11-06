@@ -88,7 +88,7 @@ for (const q of ledger) {
 }
 assert(citationCount > 300);
 const page = fs.readFileSync(__dirname + '/index.html', 'utf8');
-assert(page.includes('v1.8.4</title>'));
+assert(/v1\.(?:8\.4|9\.0)<\/title>/.test(page));
 assert.equal((page.match(/src="article-links-v1.8.4.js"/g) || []).length, 1);
 assert(page.includes('<meta name="google-adsense-account" content="ca-pub-8976067134459371">'));
 assert(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes("'./article-links-v1.8.4.js'"));

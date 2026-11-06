@@ -7,10 +7,12 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f6fb",
-  "theme_color": "#153a66",
+  "background_color": "#f3f5f2",
+  "theme_color": "#173f5f",
   "orientation": "any",
-  "categories": ["education"],
+  "categories": [
+    "education"
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
