@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'shihoshoshi-pass-';
-const CACHE_NAME = CACHE_PREFIX + 'v183-core-1';
+const CACHE_NAME = CACHE_PREFIX + 'v183-core-2';
 const CORE_FILES = [
   './',
   './index.html',

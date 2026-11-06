@@ -33,5 +33,10 @@ html = html.replace(
 assert html.count('id="v183TextBack"') == 1
 assert html.count('id="v183FiveTextBack"') == 1
 
+# Keep AdSense ownership verification when regenerating the published page.
+adsense_meta = '<meta name="google-adsense-account" content="ca-pub-8976067134459371">'
+assert html.count('</head>') == 1
+html = html.replace('</head>', adsense_meta + '</head>', 1)
+
 page.write_text(html, encoding="utf-8")
 print("Built Ver.1.8.3", page.stat().st_size, "bytes")
