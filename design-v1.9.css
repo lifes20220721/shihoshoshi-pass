@@ -203,6 +203,19 @@ button.primary {
   background: #f2f6f5;
 }
 
+.v191-quality-note {
+  margin-top: 14px;
+  padding: 13px;
+  background: var(--pass-teal-soft);
+  border-left: 4px solid var(--pass-teal);
+  border-radius: 8px;
+  line-height: 1.75;
+}
+
+.v191-quality-note p {
+  margin: 5px 0 0;
+}
+
 .tag {
   color: #27615d;
   background: var(--pass-teal-soft);

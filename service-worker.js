@@ -1,11 +1,12 @@
 'use strict';
 
 const CACHE_PREFIX = 'shihoshoshi-pass-';
-const CACHE_NAME = CACHE_PREFIX + 'v190-core-1';
+const CACHE_NAME = CACHE_PREFIX + 'v191-core-1';
 const CORE_FILES = [
   './',
   './index.html',
   './design-v1.9.css',
+  './question-quality-v1.9.1.js',
   './privacy.html',
   './contact.html',
   './sources.html',
