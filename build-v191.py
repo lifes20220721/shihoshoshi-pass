@@ -46,11 +46,19 @@ html = html.replace(
     1,
 )
 assert html.count("question-quality-v1.9.1.js") == 1
+# Keep reciprocal study-site links when rebuilding the published page.
+related_styles = "<style id=\"pass-related-styles\">.pass-related-nav{max-width:900px;margin:12px auto 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;font-size:13px;box-sizing:border-box}.pass-related-nav--inset{margin-top:0;padding:0 18px 16px}.pass-related-nav>span{color:#d7e6ee}.pass-related-nav a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid #abc8d9;border-radius:9px;color:#fff;text-decoration:none;line-height:1.5;box-sizing:border-box}.pass-related-nav a:hover{background:rgba(255,255,255,.12)}.pass-related-nav a:focus-visible,.pass-related-footer a:focus-visible{outline:3px solid #d5b46d;outline-offset:4px}.pass-related-footer{margin-top:12px;line-height:1.8}.pass-related-footer a{display:inline-block;padding:8px 0}</style>"
+related_nav = "<nav class=\"pass-related-nav\" aria-label=\"関連学習サイト\"><span>関連サイト</span><a href=\"https://gyoseishoshipass.com/\" target=\"_blank\" rel=\"noopener noreferrer\">行政書士PASSへ ↗（別タブ）</a></nav>"
+related_footer = "<p class=\"pass-related-footer\"><a href=\"https://gyoseishoshipass.com/\" target=\"_blank\" rel=\"noopener noreferrer\">行政書士PASSへ ↗（別タブ）</a></p>"
+assert html.count("</header>") == 1 and html.count("</footer>") == 1
+html = html.replace("</head>", related_styles + "</head>", 1)
+html = html.replace("</header>", related_nav + "</header>", 1)
+html = html.replace("</footer>", related_footer + "</footer>", 1)
 page.write_text(html, encoding="utf-8")
 
 worker_path = ROOT / "service-worker.js"
 worker = worker_path.read_text(encoding="utf-8")
-worker = worker.replace("v190-core-1", "v191-core-1")
+worker = worker.replace("v190-core-1", "v191-core-2").replace("v191-core-1", "v191-core-2")
 if "'./question-quality-v1.9.1.js'" not in worker:
     worker = worker.replace("  './design-v1.9.css',", "  './design-v1.9.css',\n  './question-quality-v1.9.1.js',", 1)
 worker_path.write_text(worker, encoding="utf-8")
