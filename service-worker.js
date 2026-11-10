@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'shihoshoshi-pass-';
-const CACHE_NAME = CACHE_PREFIX + 'v191-core-2';
+const CACHE_NAME = CACHE_PREFIX + 'v192-core-1';
 const CORE_FILES = [
   './',
   './index.html',
@@ -12,7 +12,7 @@ const CORE_FILES = [
   './sources.html',
   './manifest.webmanifest',
   './pwa-v1.8.js',
-  './resume-v1.8.3.js',
+  './resume-v1.9.2.js',
   './article-links-v1.8.4.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -80,3 +80,4 @@ self.addEventListener('fetch', function (event) {
     })
   );
 });
+
