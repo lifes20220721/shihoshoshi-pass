@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "scripts": [
+    "data/init.js",
+    "data/base.js",
+    "data/subjects.js",
+    "data/lesson-notes.js",
+    "data/past-exams.js",
+    "data/lessons.js",
+    "data/cases.js",
+    "data/reinforcement.js",
+    "data/questions/civil.js",
+    "data/questions/realestate.js",
+    "data/questions/company.js",
+    "data/questions/commercialreg.js",
+    "data/questions/civilprocedure.js",
+    "data/questions/execution.js",
+    "data/questions/preservation.js",
+    "data/questions/constitution.js",
+    "data/questions/criminal.js",
+    "data/questions/deposit.js",
+    "data/questions/scrivener.js",
+    "data.js",
+    "js/storage.js",
+    "app.js",
+    "js/subjects.js",
+    "js/study-tools.js",
+    "js/library.js",
+    "js/amendments.js",
+    "js/past-exams.js",
+    "js/learning.js",
+    "js/casebook.js",
+    "js/pwa.js",
+    "js/article-links.js",
+    "js/question-quality.js",
+    "js/resume.js"
+  ],
+  "styles": [
+    "styles.css"
+  ]
+}

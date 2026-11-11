@@ -1,0 +1,12 @@
+{
+  "name": "shihoshoshi-pass",
+  "version": "2.0.0",
+  "private": true,
+  "description": "司法書士PASS — static JavaScript learning application",
+  "scripts": {
+    "prepare:release": "node scripts/prepare-release.cjs",
+    "test": "node tests/content.cjs && node tests/resume.cjs",
+    "test:browser": "node tests/browser.cjs"
+  },
+  "engines": { "node": ">=18" }
+}

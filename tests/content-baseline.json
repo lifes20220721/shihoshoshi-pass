@@ -1,0 +1,55 @@
+{
+  "sourceCommit": "523e86acc8ffc58593f699d90f78251cb9cea0b3",
+  "hashes": {
+    "ox": {
+      "expression": "questions",
+      "sha256": "29a963ea2a44781948ef125261d728237490e7ff7bdea4b121d9fd0fcd8928fe",
+      "count": 2033
+    },
+    "five": {
+      "expression": "fiveQuestions",
+      "sha256": "5dc3dfcabf7382e21cff7a334ec3c1fdd47d621ac37bf28ba11c67ad45534b3a",
+      "count": 385
+    },
+    "fiveTopics": {
+      "expression": "v11FiveTopic",
+      "sha256": "90e465d12c325d0c09672b9b73689e3e80dca6f82005b556d81196366f020ab4",
+      "count": 385
+    },
+    "subjects": {
+      "expression": "v11Subjects",
+      "sha256": "f9d2aec301397f82f2dc3826d1c68b8369834a0ce68fa79f27463bec2d10c16e",
+      "count": 11
+    },
+    "chapters": {
+      "expression": "chapters",
+      "sha256": "4525a55f6c1b0cb6801c44f0991dc2565771cd5d957d6854e1eed028bd139415",
+      "count": 61
+    },
+    "units": {
+      "expression": "v16Units",
+      "sha256": "b2a0431c68a147d2bdc47f2998a9c1b416b0e83f2d5c4450cd8d111777bb54d7",
+      "count": 61
+    },
+    "past": {
+      "expression": "v15PastQuestions",
+      "sha256": "a722d4fe5a31e10488e63740bc07dc87ba102f63c0e3355bdbb06c48e6d2dd5c",
+      "count": 360
+    },
+    "amendments": {
+      "expression": "v15LawAmendments",
+      "sha256": "63eac5b07770cae8d5a9089c7365d49f30e7ff69fc3d8537a25c8ac6ffb46478",
+      "count": 14
+    },
+    "cases": {
+      "expression": "v17CaseData",
+      "sha256": "c6dd70da85cf035be0535095a6dab4d506c3bb4985d58b84594acffb63633a19",
+      "count": null
+    },
+    "notes": {
+      "expression": "v14Notes",
+      "sha256": "bd2c82a4e1429e2a97f1db62aa28858a196f147982e7e36f6919d5200b92dee5",
+      "count": null
+    }
+  }
+}

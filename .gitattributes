@@ -1,0 +1,3 @@
+# Historical full-page snapshots are generated archives, not current source.
+index-v*-*.html linguist-generated=true
+shihoshoshi-pass-v*.html linguist-generated=true
