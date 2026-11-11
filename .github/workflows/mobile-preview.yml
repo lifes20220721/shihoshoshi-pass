@@ -1,0 +1,36 @@
+name: Build mobile preview
+on:
+  pull_request:
+    paths: ['mobile/**', '.github/workflows/mobile-preview.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [shihoshoshi, gyoseishoshi]
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: node scripts/fetch-sources.mjs
+      - run: npm test
+      - run: npm run build
+      - run: npm run native -- ${{ matrix.app }} android
+      - name: Build unsigned preview APK
+        run: bash native/${{ matrix.app }}/android/gradlew -p native/${{ matrix.app }}/android assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-debug-preview
+          path: mobile/native/${{ matrix.app }}/android/app/build/outputs/apk/debug/app-debug.apk
