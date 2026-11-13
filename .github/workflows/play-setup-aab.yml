@@ -1,0 +1,59 @@
+name: Build Play setup bundle
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/play-setup-aab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check out existing app preparation source
+        uses: actions/checkout@v4
+        with:
+          ref: 6ad545d00c964ad4f8490176a725bdfd487fd0b3
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android build target
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - run: npm ci
+      - run: node scripts/fetch-sources.mjs
+      - run: npm test
+      - run: npm run build
+      - run: npm run native -- shihoshoshi android
+      - name: Build unsigned registration bundle
+        run: bash native/shihoshoshi/android/gradlew --no-daemon --console=plain -p native/shihoshoshi/android bundleRelease
+      - name: Collect bundle and verification inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/play-setup
+          cp native/shihoshoshi/android/app/build/outputs/bundle/release/app-release.aab out/play-setup/unsigned.aab
+          cp native/shihoshoshi/android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml out/play-setup/AndroidManifest.xml
+          cp apps.json out/play-setup/apps.json
+          tar -czf out/play-setup/built-web-assets.tar.gz -C dist/shihoshoshi .
+          cd out/play-setup
+          sha256sum unsigned.aab AndroidManifest.xml apps.json built-web-assets.tar.gz > SHA256SUMS
+      - name: Save registration build for local signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: shihoshoshi-play-setup-unsigned
+          path: mobile/out/play-setup/
+          if-no-files-found: error
+          retention-days: 7
