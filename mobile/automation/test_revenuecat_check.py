@@ -14,6 +14,14 @@ class RevenueCatConnectionTests(unittest.TestCase):
             with self.assertRaises(r.SetupError):
                 r.Client(token)
 
+    def test_boundary_whitespace_is_normalized_without_logging_key(self):
+        token = 'sk_' + 'fixture_not_a_real_secret_key'
+        self.assertEqual(r.Client(' \n' + token + '\n ').token, token)
+        with self.assertRaisesRegex(r.SetupError, 'setting name'):
+            r.Client('REVENUECAT_AUTOMATION_KEY')
+        with self.assertRaisesRegex(r.SetupError, 'internal whitespace'):
+            r.Client(token + '\nadditional_text')
+
     def test_only_expected_configuration_reads_are_allowed(self):
         c = self.client(); c.project = 'proj123'
         for path in ('https://evil.example/v2/projects', '//evil.example/v2/projects',

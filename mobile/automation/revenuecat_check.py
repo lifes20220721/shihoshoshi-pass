@@ -27,8 +27,18 @@ def identifier(value):
 
 class Client:
     def __init__(self, token):
-        if not isinstance(token, str) or not token.startswith('sk_') or len(token) < 20 or re.search(r'\s', token):
+        if isinstance(token, str):
+            token = token.strip()
+        if token == 'REVENUECAT_AUTOMATION_KEY':
+            raise SetupError('Repository secret contains the setting name instead of the RevenueCat key; replace its value')
+        if isinstance(token, str) and token.startswith(('test_', 'goog_', 'appl_', 'amzn_')):
+            raise SetupError('Repository secret contains a public SDK key; use the V2 secret key from Secret API keys')
+        if not isinstance(token, str) or not token.startswith('sk_'):
             raise SetupError('A RevenueCat v2 secret key is required in the repository secret')
+        if len(token) < 20:
+            raise SetupError('The saved RevenueCat secret key is incomplete')
+        if re.search(r'\s', token):
+            raise SetupError('The saved RevenueCat secret key contains internal whitespace; copy the key alone')
         self.token = token
         self.project = None
         self.opener = urllib.request.build_opener(NoRedirect)
