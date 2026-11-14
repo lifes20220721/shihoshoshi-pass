@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "initial_console_upload_verified": true,
+  "workload_identity_provider": "projects/589479973554/locations/global/workloadIdentityPools/github-play-draft/providers/github",
+  "service_account": "play-draft-uploader@shihoshoshi-pass-ci.iam.gserviceaccount.com",
+  "package_name": "com.shihoshoshipass.app",
+  "drive_file_id": "12DKx4CKf10hDb4r1iKSU4trYl4OSrjqx",
+  "sha256": "919f030ad7fc61e01e5d6726e1c525c6dce7767d24916888d5a40b9e4acdc244",
+  "size": 7219527,
+  "version_code": 1,
+  "draft_name": "Play setup v1 - subscription configuration pending"
+}

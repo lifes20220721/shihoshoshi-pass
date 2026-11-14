@@ -1,0 +1,10 @@
+node_modules/
+sources/
+dist/
+native/
+test-results/
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+store-config.local.json

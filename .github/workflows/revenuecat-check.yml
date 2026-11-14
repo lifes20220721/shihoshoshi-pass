@@ -1,0 +1,33 @@
+name: Check RevenueCat project connection
+
+on:
+  push:
+    branches: ['codex/store-apps-preparation']
+    paths: ['mobile/automation/revenuecat*.py', 'mobile/automation/test_revenuecat*.py', 'mobile/automation/revenuecat-check-request.json', '.github/workflows/revenuecat-check.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shihoshoshi-revenuecat-setup
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/codex/store-apps-preparation'
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate safe configuration inspection
+        run: python -m unittest discover -s mobile/automation -p 'test_revenuecat*.py' -v
+      - name: Inspect or configure the approved Android catalog
+        env:
+          REVENUECAT_AUTOMATION_KEY: ${{ secrets.REVENUECAT_AUTOMATION_KEY }}
+        run: python mobile/automation/revenuecat_setup.py

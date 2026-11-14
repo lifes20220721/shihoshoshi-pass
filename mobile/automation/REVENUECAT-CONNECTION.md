@@ -1,0 +1,33 @@
+# RevenueCatの自動接続準備
+
+## 現在の結果
+
+利用者がGitHub secretを正しいV2秘密キーへ更新し、run43608611643/job132490930787で自動接続に成功した。その後run43609852338/job132492270199で、既存プロジェクトproj9ba19f6bへGoogle Playアプリapp1d9873660b（com.shihoshoshipass.app）、商品shihoshoshi_premium:monthly / shihoshoshi_premium:annual、offering shihoshoshi_subscription（ofrng13e1ae7a71）、$rc_monthly / $rc_annual packageを追加し、既存entitlement shihoshoshi_premiumへ紐付けた。すべて読み戻しに成功。既存Test Storeとdefault offeringは維持した。
+
+Google Playアプリのproduction公開SDKキー（goog_）だけをapps.jsonへ反映し、ローカルWebビルドと課金判定の既存検証が成功した。秘密のsk_キーはGitHub Actions secretにあり、取得・出力・アプリへの組み込みは行っていない。既存の署名済み準備用AABは更新していない。
+
+未完了：Google Play側の500円／5000円の基本プラン保存は、正しいアプリ権限をUIで確認後もHTTP403。RevenueCatへ購入確認用Googleサービスアカウント資格情報を渡していない。購入・復元・解約・期限切れテスト、正式AAB、審査送信・配信は未実施。
+
+## Google Cloud所有者による次の処理
+
+setup_revenuecat_google.pyは所有者のCloud Shellで実行するための準備済みhelperで、まだ実行していない。正しい所有者、プロジェクト番号、RevenueCatアプリID・packageを確認し、revenuecat-billing@shihoshoshi-pass-ci.iam.gserviceaccount.comを作成する。公式手順に沿ってAndroid Publisher/Reporting、IAM、Pub/Sub APIを有効化し、この購入確認用アカウントだけにPub/Sub Editor・Monitoring Viewerを付ける。既存のplay-draft-uploaderの権限や鍵は変更しない。
+
+入力するRevenueCat V2秘密キーはCloud Shellの非表示プロンプトだけで受け取り、チャットへ送らせない。Google JSON鍵はprivateな一時ディレクトリで生成し、固定されたRevenueCatアプリのplay_service_account_credentials_jsonへ直接送って一時ファイルを削除する。成功した鍵はGoogle Cloudで有効のまま保持する。転送失敗時に削除するのはhelperが新規作成した鍵だけ。既存鍵を勝手に更新しない。秘密を持たない状態記録によって再実行時の重複を避ける。
+
+完了後もGoogle Play Consoleで購入確認用アカウントの招待・必要権限の付与が必要。公開・審査送信・商品有効化はhelperに実装していない。8件の追加テストで、別所有者/別アプリの拒否、鍵の一時ファイル削除、転送失敗時の新規鍵だけの削除、既存鍵保護、再実行、秘密値の非表示を確認した。Cloud Shell実行結果が出るまでは資格情報作成・アップロード完了と扱わない。
+
+以下は初回導入時の経緯で、現在の結果は上記を参照する。
+
+ユーザーはRevenueCatを登録し、カード登録を後回しにして、司法書士PASSプロジェクトとメール認証を完了した。画面1451でentitlement名shihoshoshi_premiumとMonthly・Yearlyの2件を確認した。これはRevenueCat側の初期設定であり、Google Playの料金・実商品の接続・販売開始を意味しない。SDK案内画面1453に見えたテスト用公開キーを正式Android用に採用していない。
+
+ユーザーは自動処理を明示している。スマホでのログインは自動操作環境へ共有されていない。RevenueCatの専用プラグインは検索で見つからず、既存ブラウザ自動操作の残高も不足している。追加購入・自動入金は行わない。
+
+APIによる接続にはRevenueCat v2の秘密キーが必要。初回はProject configurationのReadに限定してプロジェクト・アプリ・商品・entitlement・offeringを照合する。後から実設定の自動化に必要な範囲を確認してWriteを追加する。顧客、注文、返金、購読者の操作は本処理に必要ない。
+
+利用者の「自動処理して」に基づき、画面1460でV2、Project configurationのみRead & write、他の権限グループはNo accessを選択してpass-automationを発行するところまで案内した。GitHubへの保存後run43608611643/job132488501195で公開SDKキーを検出し、API呼び出し前に停止した。値そのものは取得・表示していない。RevenueCat上段Secret API keysの秘密キー（sk_で始まる）をコピーし、既存のGitHub secretの値を差し替える本人操作が必要。キーの文字列や表示画面をチャットに要求しない。SDK公開キーのカードと秘密キーの一覧を混同しないよう画面上の位置で案内する。
+
+キーはユーザーがGitHubの当該リポジトリのActions secret `REVENUECAT_AUTOMATION_KEY` に入力する。チャット・ソースコード・設定JSON・公開ログには入れない。登録画面は https://github.com/lifes20220721/shihoshoshi-pass/settings/secrets/actions/new 。まだキーの登録・接続成功は未確認。API v1秘密キー・goog_等の公開SDKキー・test_キーは自動接続用に使わない。
+
+workflow `.github/workflows/revenuecat-check.yml` と `mobile/automation/revenuecat_check.py` は読み取りのみ。秘密キーが未設定なら `connection_configured:false` を出力し、成功した接続とは扱わない。キー入力後、request JSONのrequest番号を上げたpushで接続確認を起動できる。別プロジェクト、顧客API、秘密キーの取得API、別ホストへのリダイレクトは禁止。8件の追加テストを含む合計26件の検証が成功した。
+
+公式資料： https://www.revenuecat.com/docs/api-v2 （Authentication / API v2 Permissions）。実際のアプリ・entitlement lookup_key・offering識別子をAPIで確認するまで、既存のshihoshoshi_premium / shihoshoshi_subscription設定との一致は未確認。
