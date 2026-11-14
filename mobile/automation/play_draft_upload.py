@@ -49,8 +49,18 @@ class GoogleClient:
                     raise SafeError('API response exceeds the size limit')
                 return data if raw else json.loads(data or b'{}')
         except urllib.error.HTTPError as error:
+            # Log only bounded canonical status/reason codes, never message,
+            # headers or arbitrary response fields that could contain secrets.
+            reasons = []
+            try:
+                detail = json.loads(error.read(16384)).get('error', {})
+                candidates = [detail.get('status')] + [e.get('reason') for e in detail.get('errors', [])] + [e.get('reason') for e in detail.get('details', [])]
+                reasons = sorted({v for v in candidates if isinstance(v, str) and re.fullmatch(r'[A-Za-z_]{1,64}', v)})
+            except (ValueError, TypeError, AttributeError):
+                pass
+            canonical = ' (' + ','.join(reasons) + ')' if reasons else ''
             hint = ' Confirm the first Play Console upload and app permissions.' if error.code in (400, 403, 404) else ''
-            raise SafeError(f'Google API returned HTTP {error.code} for {method} {urllib.parse.urlparse(url).path}.' + hint) from None
+            raise SafeError(f'Google API returned HTTP {error.code}{canonical} for {method} {urllib.parse.urlparse(url).path}.' + hint) from None
         except (urllib.error.URLError, TimeoutError):
             raise SafeError('Google API connection failed; no automatic publication retry was attempted') from None
 

@@ -24,9 +24,6 @@ class FakeCatalog:
             if self.concurrent and self.gets == 2:
                 result['listings'][0]['title'] = 'Changed by owner'
             return result
-        if url.endswith('/pricing:convertRegionPrices'):
-            return {'regionVersion': {'version': '2022/02'},
-                    'convertedRegionPrices': {'JP': {'price': {'currencyCode': 'JPY', 'units': '550'}}}}
         if method == 'PATCH':
             self.product.update(copy.deepcopy(body))
             for plan in self.product['basePlans']:
@@ -54,6 +51,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual({plan['basePlanId']: plan['regionalConfigs'][0]['price']['units']
                           for plan in patches[0][1]['basePlans']}, {'monthly': '500', 'annual': '5000'})
         self.assertTrue(all('/edits' not in url and ':activate' not in url for _, url, _ in c.calls))
+        self.assertTrue(all(method in ('GET', 'PATCH') for method, _, _ in c.calls))
 
     def test_permission_denial_stops_before_any_mutation(self):
         class Denied(FakeCatalog):

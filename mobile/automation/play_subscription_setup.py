@@ -11,6 +11,9 @@ from play_draft_upload import GoogleClient, PACKAGE, PUBLISHER, SafeError
 TITLE = '司法書士PASS 全機能プラン'
 EXPECTED = {'monthly': ('P1M', '500'), 'annual': ('P1Y', '5000')}
 BENEFITS = ['全11科目の教材と問題演習', '学習履歴の保存と復習']
+# Official RegionsVersion supports older published versions. Japan/JPY is
+# unchanged in 2022/02; no currency conversion is needed for fixed JP prices.
+REGIONS_VERSION = '2022/02'
 
 
 class CatalogClient:
@@ -25,8 +28,7 @@ class CatalogClient:
             path == root + '/shihoshi_premium' or path == root + '/shihoshoshi_premium')
         allowed_patch = method == 'PATCH' and path in (
             root + '/shihoshi_premium', root + '/shihoshoshi_premium')
-        allowed_conversion = method == 'POST' and path == PUBLISHER + '/pricing:convertRegionPrices'
-        if not (allowed_read or allowed_patch or allowed_conversion):
+        if not (allowed_read or allowed_patch):
             raise SafeError('Catalog endpoint is not permitted')
         return self.client.request(method, url, body)
 
@@ -99,11 +101,6 @@ def run(raw_client, config, mode):
         verify_plans(current['basePlans'])
         return {'mode': mode, 'draft_plans_verified': True, 'already_configured': True,
                 'product_id': product_id, 'changes_saved': False, 'activated': False}
-    conversion = client.request('POST', PUBLISHER + '/pricing:convertRegionPrices',
-                                {'price': {'currencyCode': 'JPY', 'units': '500'}})
-    version = conversion.get('regionVersion', {}).get('version')
-    if not isinstance(version, str) or not version:
-        raise SafeError('Google region version is missing')
     plans = [{'basePlanId': identifier,
               'autoRenewingBasePlanType': {'billingPeriodDuration': duration},
               'regionalConfigs': [{'regionCode': 'JP', 'newSubscriberAvailability': True,
@@ -118,7 +115,7 @@ def run(raw_client, config, mode):
         raise SafeError('Catalog changed concurrently; stopped without writing')
     body = {'packageName': PACKAGE, 'productId': product_id,
             'basePlans': plans, 'listings': updated_listings}
-    query = urlencode({'updateMask': 'basePlans,listings', 'regionsVersion.version': version})
+    query = urlencode({'updateMask': 'basePlans,listings', 'regionsVersion.version': REGIONS_VERSION})
     client.request('PATCH', url + '?' + query, body)
     # The API creates plans as DRAFT. This program has no activation endpoint.
     saved = client.request('GET', url)
