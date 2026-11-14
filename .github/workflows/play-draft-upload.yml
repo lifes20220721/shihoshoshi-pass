@@ -1,0 +1,85 @@
+name: Check or save Play internal draft
+
+on:
+  push:
+    branches: ['codex/store-apps-preparation']
+    paths: ['mobile/automation/**', '.github/workflows/play-draft-upload.yml']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'check = connection only; draft = save internal draft only'
+        type: choice
+        options: ['check', 'draft']
+        default: 'check'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shihoshoshi-play-draft-upload
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.settings.outputs.enabled }}
+      provider: ${{ steps.settings.outputs.provider }}
+      account: ${{ steps.settings.outputs.account }}
+      mode: ${{ steps.settings.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s mobile/automation -p 'test_*.py' -v
+      - id: settings
+        env:
+          REQUESTED_MODE: ${{ inputs.mode }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          cfg = json.loads(Path('mobile/automation/play-draft-config.json').read_text())
+          request = json.loads(Path('mobile/automation/play-draft-request.json').read_text())
+          mode = os.environ.get('REQUESTED_MODE') or request.get('mode', 'check')
+          if mode not in ('check', 'draft'):
+              raise SystemExit('Only check or draft mode is permitted')
+          if cfg['enabled'] and (not cfg['workload_identity_provider'] or not cfg['service_account']):
+              raise SystemExit('Complete keyless account configuration before enabling')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              for k, v in {'enabled':str(cfg['enabled']).lower(), 'provider':cfg['workload_identity_provider'], 'account':cfg['service_account'], 'mode':mode}.items():
+                  if '\n' in v or '\r' in v:
+                      raise SystemExit('Invalid configuration')
+                  stream.write(f'{k}={v}\n')
+          PY
+  upload:
+    needs: validate
+    if: needs.validate.outputs.enabled == 'true' && github.ref == 'refs/heads/codex/store-apps-preparation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - id: google
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ needs.validate.outputs.provider }}
+          service_account: ${{ needs.validate.outputs.account }}
+          token_format: access_token
+          access_token_scopes: 'https://www.googleapis.com/auth/androidpublisher,https://www.googleapis.com/auth/drive.readonly'
+          create_credentials_file: false
+      - name: Check or save internal draft
+        env:
+          PLAY_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+          MODE: ${{ needs.validate.outputs.mode }}
+        run: python mobile/automation/play_draft_upload.py --config mobile/automation/play-draft-config.json --mode "$MODE"
