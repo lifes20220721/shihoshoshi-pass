@@ -7,10 +7,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'check = connection only; draft = save internal draft only'
+        description: 'connection = auth/file only; check = Play preflight; draft = internal draft only'
         type: choice
-        options: ['check', 'draft']
-        default: 'check'
+        options: ['connection', 'check', 'draft']
+        default: 'connection'
 
 permissions:
   contents: read
@@ -44,9 +44,9 @@ jobs:
           from pathlib import Path
           cfg = json.loads(Path('mobile/automation/play-draft-config.json').read_text())
           request = json.loads(Path('mobile/automation/play-draft-request.json').read_text())
-          mode = os.environ.get('REQUESTED_MODE') or request.get('mode', 'check')
-          if mode not in ('check', 'draft'):
-              raise SystemExit('Only check or draft mode is permitted')
+          mode = os.environ.get('REQUESTED_MODE') or request.get('mode', 'connection')
+          if mode not in ('connection', 'check', 'draft'):
+              raise SystemExit('Only connection, check or draft mode is permitted')
           if cfg['enabled'] and (not cfg['workload_identity_provider'] or not cfg['service_account']):
               raise SystemExit('Complete keyless account configuration before enabling')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:

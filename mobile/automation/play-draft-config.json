@@ -1,5 +1,6 @@
 {
   "enabled": false,
+  "initial_console_upload_verified": false,
   "workload_identity_provider": "",
   "service_account": "",
   "package_name": "com.shihoshoshipass.app",

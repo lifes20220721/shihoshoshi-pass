@@ -84,10 +84,15 @@ def verify_bundle(data, config):
 
 def run(config, client, mode):
     validate_config(config)
-    if mode not in ('check', 'draft'):
-        raise SafeError('Only check and draft modes are supported')
+    if mode not in ('connection', 'check', 'draft'):
+        raise SafeError('Only connection, check and draft modes are supported')
+    if mode != 'connection' and config.get('initial_console_upload_verified') is not True:
+        raise SafeError('Verify the first AAB upload in Play Console before accessing Publisher edits')
     data = client.request('GET', 'https://www.googleapis.com/drive/v3/files/' + config['drive_file_id'] + '?alt=media', raw=True)
     verify_bundle(data, config)
+    if mode == 'connection':
+        return {'mode': mode, 'google_authentication_and_aab_download_verified': True,
+                'aab_checksum_verified': True, 'publisher_access_verified': False, 'changes_committed': False}
     edit = None
     try:
         edit = client.request('POST', PUBLISHER + '/edits', {})['id']
@@ -136,11 +141,11 @@ def run(config, client, mode):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
-    parser.add_argument('--mode', choices=['check', 'draft'], default='check')
+    parser.add_argument('--mode', choices=['connection', 'check', 'draft'], default='connection')
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     if not config.get('enabled'):
-        raise SafeError('Automation is disabled until account setup and the first Console upload are complete')
+        raise SafeError('Automation is disabled until keyless account setup and the AAB-only Viewer grant are verified')
     result = run(config, GoogleClient(os.environ.get('PLAY_ACCESS_TOKEN')), args.mode)
     print(json.dumps(result))
 

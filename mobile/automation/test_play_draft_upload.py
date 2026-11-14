@@ -14,7 +14,8 @@ def fixture():
         archive.writestr('META-INF/TEST.RSA', b'x' * 1600)
     content = data.getvalue()
     config = {'package_name': p.PACKAGE, 'drive_file_id': 'approved_signed_aab', 'size': len(content),
-              'sha256': hashlib.sha256(content).hexdigest(), 'version_code': 1, 'draft_name': 'Setup draft'}
+              'sha256': hashlib.sha256(content).hexdigest(), 'version_code': 1, 'draft_name': 'Setup draft',
+              'initial_console_upload_verified': True}
     return content, config
 
 
@@ -49,6 +50,23 @@ class FakeGoogle:
 
 
 class DraftUploadTests(unittest.TestCase):
+    def test_connection_mode_does_not_call_publisher_before_first_upload(self):
+        data, config = fixture(); config['initial_console_upload_verified'] = False
+        client = FakeGoogle(data, config)
+        result = p.run(config, client, 'connection')
+        self.assertTrue(result['google_authentication_and_aab_download_verified'])
+        self.assertFalse(result['publisher_access_verified'])
+        self.assertEqual(len(client.calls), 1)
+        self.assertTrue(client.calls[0][1].startswith('https://www.googleapis.com/drive/'))
+
+    def test_publisher_modes_require_verified_first_console_upload(self):
+        data, config = fixture(); config['initial_console_upload_verified'] = False
+        client = FakeGoogle(data, config)
+        for mode in ('check', 'draft'):
+            with self.assertRaisesRegex(p.SafeError, 'first AAB upload'):
+                p.run(config, client, mode)
+        self.assertEqual(client.calls, [])
+
     def test_check_never_uploads_changes_track_or_commits(self):
         data, config = fixture(); client = FakeGoogle(data, config)
         self.assertTrue(p.run(config, client, 'check')['verified'])

@@ -1,6 +1,6 @@
 # Google Playの下書きアップロード自動化
 
-現在は準備段階。Google Cloudの初回利用規約に未同意のため、プロジェクト・API・サービスアカウント・認証連携・Play権限はまだ作成されていない。`play-draft-config.json` は `enabled: false` で、実際のAPI操作を開始しない。
+現在は準備段階。利用者からGoogle Cloudの初回規約へ同意したとの報告を受け、専用プロジェクト・API・サービスアカウント・認証連携・Play権限の設定を進めている。完了が確認できるまで `play-draft-config.json` は `enabled: false` で、実際のAPI操作を開始しない。
 
 ## 方式
 
@@ -32,10 +32,11 @@ assertion.workflow_ref == 'lifes20220721/shihoshoshi-pass/.github/workflows/play
 1. 利用者がGoogle Cloudの初回規約と居住国を確認する。無料トライアルや課金アカウントの登録は本手順では行わない。
 2. 専用アカウント、WIF条件、Playのアプリ権限、DriveのAABだけの共有を設定・確認する。
 3. `workload_identity_provider` に完全なproviderリソース名、`service_account` に作成したサービスアカウントメールを設定する。これらは秘密鍵ではない。
-4. Play Console経由で最初のAABを登録する。公式Edits APIは最初の登録前には使えない。
-5. 以上を確認した後にだけ `enabled: true` にし、まずcheckを成功させる。
+4. Play Console経由で最初のAABを登録する操作も別途必要。公式Edits APIは最初の登録前には使えないが、connectionモードによる認証・ファイル取得の確認は先に行える。
+5. 認証連携とDriveのAABだけの共有を確認した後に `enabled: true` にし、まずconnectionを成功させる。このモードはGoogle認証・AAB取得・ハッシュ確認だけを行い、Publisher APIを呼ばない。初回アップロードを確認するまで `initial_console_upload_verified` はfalseを保持する。
+6. 初回のConsoleアップロードを確認した後にだけ `initial_console_upload_verified: true` にし、checkを成功させる。その後、必要な場合だけdraftを選ぶ。
 
-チェック・下書き作成は `play-draft-request.json` のmodeをcheck/draftにして作業用ブランチへ保存すると実行できる。workflow_dispatchが利用可能になった場合も既定値はcheck。ワークフローファイルを初めて追加した作業用ブランチでは、GitHubの仕様により手動実行ボタンが出ない場合があるため、pushで実行する経路を用意している。
+接続確認・チェック・下書き作成は `play-draft-request.json` のmodeをconnection/check/draftにして作業用ブランチへ保存すると実行できる。workflow_dispatchが利用可能になった場合も既定値はconnection。ワークフローファイルを初めて追加した作業用ブランチでは、GitHubの仕様により手動実行ボタンが出ない場合があるため、pushで実行する経路を用意している。
 
 APIは `changesNotSentForReview=true` と `status=draft` を固定する。既存の別リリースを見つけた場合は変更せず停止する。同じAABの既存下書きは保持する。本番トラック、配信開始、審査送信は実装しない。実行中にPlay Consoleを同時編集するとGoogleがAPIのeditを破棄するため、完了を待ってから操作する。
 
@@ -47,4 +48,4 @@ APIは `changesNotSentForReview=true` と `status=draft` を固定する。既�
 python3 -m unittest discover -s automation -p 'test_*.py' -v
 ```
 
-8件のプロセス内テストで、check時の非更新、internal/draft/審査未送信の固定、既存下書きの保持、他リリースの拒否、版・ハッシュ不一致の拒否、一時editの削除を確認。実際のGoogle API接続は初回規約と権限設定の完了後に検証する。
+10件のプロセス内テストで、初回登録前のconnectionモードのPublisher非呼び出し、未確認時のcheck/draft拒否、check時の非更新、internal/draft/審査未送信の固定、既存下書きの保持、他リリースの拒否、版・ハッシュ不一致の拒否、一時editの削除を確認。実際のGoogle API接続は権限設定の完了後に検証する。
