@@ -3,7 +3,7 @@ name: Check RevenueCat project connection
 on:
   push:
     branches: ['codex/store-apps-preparation']
-    paths: ['mobile/automation/revenuecat_check.py', 'mobile/automation/test_revenuecat_check.py', 'mobile/automation/revenuecat-check-request.json', '.github/workflows/revenuecat-check.yml']
+    paths: ['mobile/automation/revenuecat*.py', 'mobile/automation/test_revenuecat*.py', 'mobile/automation/revenuecat-check-request.json', '.github/workflows/revenuecat-check.yml']
   workflow_dispatch:
 
 permissions:
@@ -26,8 +26,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate safe configuration inspection
-        run: python -m unittest discover -s mobile/automation -p 'test_revenuecat_check.py' -v
-      - name: Inspect intended project without changing it
+        run: python -m unittest discover -s mobile/automation -p 'test_revenuecat*.py' -v
+      - name: Inspect or configure the approved Android catalog
         env:
           REVENUECAT_AUTOMATION_KEY: ${{ secrets.REVENUECAT_AUTOMATION_KEY }}
-        run: python mobile/automation/revenuecat_check.py
+        run: python mobile/automation/revenuecat_setup.py

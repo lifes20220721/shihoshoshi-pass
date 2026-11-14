@@ -55,8 +55,16 @@ class Client:
             packages = re.fullmatch(re.escape(prefix) + r'/offerings/[A-Za-z0-9_-]{1,128}/packages', parsed.path)
             if parsed.path not in allowed and not packages:
                 raise SetupError('Only intended-project catalog reads are permitted')
+        return self._request('GET', path)
+
+    def _request(self, method, path, body=None):
+        headers = {'Authorization': 'Bearer ' + self.token, 'Accept': 'application/json'}
+        data = None
+        if body is not None:
+            headers['Content-Type'] = 'application/json'
+            data = json.dumps(body).encode()
         request = urllib.request.Request('https://api.revenuecat.com' + path,
-            headers={'Authorization': 'Bearer ' + self.token, 'Accept': 'application/json'}, method='GET')
+            headers=headers, data=data, method=method)
         try:
             with self.opener.open(request, timeout=45) as response:
                 data = response.read(1_000_001)
@@ -64,7 +72,7 @@ class Client:
                     raise SetupError('RevenueCat configuration response is too large')
                 return json.loads(data)
         except urllib.error.HTTPError as error:
-            raise SetupError(f'RevenueCat configuration API returned HTTP {error.code}; verify v2 project-configuration Read permission') from None
+            raise SetupError(f'RevenueCat configuration API returned HTTP {error.code} for {method} {urllib.parse.urlsplit(path).path}; verify project-configuration permission') from None
         except (urllib.error.URLError, TimeoutError):
             raise SetupError('RevenueCat connection failed') from None
 
