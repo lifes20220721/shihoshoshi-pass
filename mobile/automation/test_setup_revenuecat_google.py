@@ -112,6 +112,15 @@ class BootstrapTests(unittest.TestCase):
                 s.main()
             prompt.assert_not_called()
 
+    def test_empty_or_public_key_input_keeps_waiting_without_cloud_changes(self):
+        expected = 'sk_fixture_secret_token_only_for_unit_test'
+        with patch.object(s.os, 'isatty', return_value=True), patch.object(s.getpass, 'getpass', side_effect=['', 'test_public_key', expected]) as prompt, patch.object(s, 'configure', return_value={'credentials_uploaded': True}) as configure, contextlib.redirect_stdout(io.StringIO()) as output:
+            s.main()
+        self.assertEqual(prompt.call_count, 3)
+        configure.assert_called_once()
+        self.assertEqual(configure.call_args.args[0], expected)
+        self.assertNotIn(expected, output.getvalue())
+
     def test_failed_cli_does_not_print_private_command_response(self):
         class Failure:
             returncode = 1

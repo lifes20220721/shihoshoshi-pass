@@ -139,7 +139,15 @@ def configure(token, state_path):
 def main():
     if not os.isatty(0):
         raise SetupError('Run in the interactive Cloud Shell terminal; secret input must be hidden')
-    token = getpass.getpass('Paste the pass-automation secret key (hidden), then press Enter: ')
+    token = ''
+    while True:
+        candidate = getpass.getpass('Paste the pass-automation secret key (hidden), then press Enter: ').strip()
+        if candidate.startswith('sk_') and len(candidate) >= 20 and not any(c.isspace() for c in candidate):
+            token = candidate
+            candidate = ''
+            break
+        candidate = ''
+        print('Still waiting: copy pass-automation from the upper Secret API keys section (starts with sk_).')
     try:
         result = configure(token, Path.home() / '.config/pass/revenuecat-google-setup.json')
         print(json.dumps(result))
