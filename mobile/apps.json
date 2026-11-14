@@ -10,7 +10,10 @@
     "storagePrefix": "shihoshoshi-pass",
     "supportEmail": "life.s.20220721@gmail.com",
     "samplePerSubject": 10,
-    "revenueCat": { "ios": "", "android": "" }
+    "revenueCat": {
+      "ios": "",
+      "android": "goog_hNkKnHvIzXxhhughngWycCKDLUY"
+    }
   },
   "gyoseishoshi": {
     "name": "行政書士PASS",
@@ -23,6 +26,9 @@
     "storagePrefix": "gyoseishoshi-pass",
     "supportEmail": "life.s.20220721@gmail.com",
     "samplePerSubject": 10,
-    "revenueCat": { "ios": "", "android": "" }
+    "revenueCat": {
+      "ios": "",
+      "android": ""
+    }
   }
 }
