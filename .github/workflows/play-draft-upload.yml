@@ -9,7 +9,7 @@ on:
       mode:
         description: 'connection = auth/file only; check = Play preflight; draft = internal draft only'
         type: choice
-        options: ['connection', 'check', 'draft']
+        options: ['connection', 'check', 'draft', 'catalog-check', 'catalog-draft']
         default: 'connection'
 
 permissions:
@@ -45,8 +45,8 @@ jobs:
           cfg = json.loads(Path('mobile/automation/play-draft-config.json').read_text())
           request = json.loads(Path('mobile/automation/play-draft-request.json').read_text())
           mode = os.environ.get('REQUESTED_MODE') or request.get('mode', 'connection')
-          if mode not in ('connection', 'check', 'draft'):
-              raise SystemExit('Only connection, check or draft mode is permitted')
+          if mode not in ('connection', 'check', 'draft', 'catalog-check', 'catalog-draft'):
+              raise SystemExit('Unsupported automation mode')
           if cfg['enabled'] and (not cfg['workload_identity_provider'] or not cfg['service_account']):
               raise SystemExit('Complete keyless account configuration before enabling')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
@@ -82,4 +82,10 @@ jobs:
         env:
           PLAY_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
           MODE: ${{ needs.validate.outputs.mode }}
-        run: python mobile/automation/play_draft_upload.py --config mobile/automation/play-draft-config.json --mode "$MODE"
+        run: |
+          case "$MODE" in
+            catalog-check|catalog-draft)
+              python mobile/automation/play_subscription_setup.py --config mobile/automation/play-subscription-config.json --mode "$MODE"
+              ;;
+            *) python mobile/automation/play_draft_upload.py --config mobile/automation/play-draft-config.json --mode "$MODE" ;;
+          esac
