@@ -1,6 +1,6 @@
 {
   "enabled": true,
-  "initial_console_upload_verified": false,
+  "initial_console_upload_verified": true,
   "workload_identity_provider": "projects/589479973554/locations/global/workloadIdentityPools/github-play-draft/providers/github",
   "service_account": "play-draft-uploader@shihoshoshi-pass-ci.iam.gserviceaccount.com",
   "package_name": "com.shihoshoshipass.app",
