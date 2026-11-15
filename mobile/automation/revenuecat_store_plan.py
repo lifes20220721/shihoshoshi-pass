@@ -1,8 +1,11 @@
 """Prepare a reviewable Japan-only DRAFT price plan. Applying is not implemented."""
 import json
 import os
+import re
 from pathlib import Path
 import time
+import urllib.error
+import urllib.request
 
 from revenuecat_check import SetupError, identifier
 from revenuecat_store_check import StoreClient, PREFIX, PRODUCTS, run as read_store
@@ -28,6 +31,36 @@ def desired_states():
 
 class PlanClient(StoreClient):
     plan_id = None
+
+    def _request(self, method, path, body=None):
+        # The fixed plan payload contains only catalog metadata. Capture schema
+        # validation diagnostics here; never include authorization or a raw body.
+        if method != 'POST' or path != PLANS:
+            return super()._request(method, path, body)
+        request = urllib.request.Request('https://api.revenuecat.com' + path,
+            headers={'Authorization': 'Bearer ' + self.token, 'Accept': 'application/json',
+                     'Content-Type': 'application/json'},
+            data=json.dumps(body).encode(), method='POST')
+        try:
+            with self.opener.open(request, timeout=45) as response:
+                data = response.read(1000001)
+                if len(data) > 1000000:
+                    raise SetupError('Plan response exceeded its size limit')
+                return json.loads(data)
+        except urllib.error.HTTPError as error:
+            detail = ''
+            if error.code == 400:
+                try:
+                    value = json.loads(error.read(8000))
+                    detail = str(value.get('message', ''))[:2000]
+                    detail = re.sub(r'(?:sk_|goog_|appl_|test_)[A-Za-z0-9_-]+', '[redacted]', detail)
+                    if 'PRIVATE KEY' in detail:
+                        detail = '[redacted]'
+                except (ValueError, AttributeError):
+                    pass
+            raise SetupError(f'RevenueCat plan creation returned HTTP {error.code}: {detail}') from None
+        except (urllib.error.URLError, TimeoutError):
+            raise SetupError('RevenueCat plan connection failed') from None
 
     def get(self, path):
         if path == PLANS or self.plan_id and path == PLANS + '/' + self.plan_id:
