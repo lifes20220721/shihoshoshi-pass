@@ -1,0 +1,82 @@
+"""Prepare a reviewable Japan-only DRAFT price plan. Applying is not implemented."""
+import json
+import os
+from pathlib import Path
+import time
+
+from revenuecat_check import SetupError, identifier
+from revenuecat_store_check import StoreClient, PREFIX, PRODUCTS, run as read_store
+
+PLANS = PREFIX + '/store_state/plans'
+
+
+def desired_states():
+    result = []
+    for product, store_id in PRODUCTS.items():
+        plan_id = store_id.split(':')[1]
+        duration, amount = ('P1M', 500) if plan_id == 'monthly' else ('P1Y', 5000)
+        result.append({'product_id': product, 'store': 'play_store',
+            'common': {'localizations': {'ja-JP': {'name': '司法書士PASS 全機能プラン'}}},
+            'store_state': {'base_plans': {plan_id: {
+                'state': 'DRAFT',
+                'auto_renewing_base_plan_type': {'billing_period_duration': duration},
+                'regional_configs': {'JP': {'new_subscriber_availability': True,
+                    'price': {'amount_micros': amount * 1000000, 'currency': 'JPY'}}},
+                'other_regions_config': {'new_subscriber_availability': False}}}}})
+    return result
+
+
+class PlanClient(StoreClient):
+    plan_id = None
+
+    def get(self, path):
+        if path == PLANS or self.plan_id and path == PLANS + '/' + self.plan_id:
+            return self._request('GET', path)
+        return super().get(path)
+
+    def post(self, path, body):
+        if path == PLANS and body == {'desired_states': desired_states()}:
+            return self._request('POST', path, body)
+        if self.plan_id and path == PLANS + '/' + self.plan_id + '/actions/plan' and body == {}:
+            return self._request('POST', path, body)
+        raise SetupError('Only exact approved DRAFT plan preparation is permitted; apply is disabled')
+
+
+def run(client, wait=time.sleep):
+    live = read_store(client)
+    for product in live['products']:
+        if product['store_status'].get('status') == 'could_not_check':
+            raise SetupError('Live store read failed; stopped before preparing a plan')
+        if product.get('store_state', {}).get('base_plans'):
+            raise SetupError('Existing base plans found; stopped before any plan creation')
+    listing = client.get(PLANS)
+    if listing.get('next_page'):
+        raise SetupError('Additional store plans exist; inspect before creating another')
+    terminal = {'applied', 'planned_and_finished', 'cancelled', 'expired', 'discarded'}
+    active = [p for p in listing.get('items', []) if p.get('status') not in terminal]
+    if active:
+        raise SetupError('An existing store plan must be reviewed before preparing another')
+    created = client.post(PLANS, {'desired_states': desired_states()})
+    client.plan_id = identifier(created['id'])
+    if created.get('status') != 'draft':
+        raise SetupError('Unexpected new plan state; stopped without applying')
+    client.post(PLANS + '/' + client.plan_id + '/actions/plan', {})
+    for _ in range(30):
+        plan = client.get(PLANS + '/' + client.plan_id)
+        if plan.get('status') in ('planned', 'planned_and_finished', 'plan_errored'):
+            return {'mode': 'revenuecat-store-plan', 'plan': plan,
+                    'review_url': 'https://app.revenuecat.com/projects/proj9ba19f6b/product-catalog/product-editor/review-changes?plan_id=' + client.plan_id,
+                    'store_changes_applied': False, 'released': False}
+        wait(2)
+    raise SetupError('Plan still computing; inspect the existing plan before retrying')
+
+
+if __name__ == '__main__':
+    try:
+        request = json.loads(Path('mobile/automation/revenuecat-check-request.json').read_text())
+        if request.get('prepare_store_plan') is True:
+            print(json.dumps(run(PlanClient(os.environ.get('REVENUECAT_AUTOMATION_KEY'))), ensure_ascii=False))
+        else:
+            print(json.dumps({'mode': 'revenuecat-store-plan', 'skipped': True, 'store_changes_applied': False}))
+    except (SetupError, ValueError, KeyError, TypeError) as error:
+        raise SystemExit(str(error)) from None
