@@ -14,6 +14,7 @@ import zipfile
 PACKAGE = 'com.shihoshoshipass.app'
 PUBLISHER = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/' + PACKAGE
 UPLOAD = 'https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/' + PACKAGE
+SETUP_V1_SHA256 = '919f030ad7fc61e01e5d6726e1c525c6dce7767d24916888d5a40b9e4acdc244'
 
 
 class SafeError(Exception):
@@ -74,6 +75,8 @@ def validate_config(config):
         raise SafeError('Expected signed AAB checksum is required')
     if type(config.get('version_code')) is not int or config['version_code'] < 1:
         raise SafeError('Invalid version code')
+    if config.get('replace_setup_v1_draft') and (config.get('replace_setup_v1_draft') is not True or config['version_code'] != 2):
+        raise SafeError('Only internal version 2 may replace the exact setup-v1 draft')
     if type(config.get('size')) is not int or not 1_000 <= config['size'] <= 150_000_000:
         raise SafeError('Invalid expected AAB size')
 
@@ -114,12 +117,16 @@ def run(config, client, mode):
         track = client.request('GET', base + '/tracks/internal')
         releases = track.get('releases', [])
         expected_versions = [str(config['version_code'])]
+        previous = next((b for b in bundles if int(b['versionCode']) == 1), None)
+        replace_setup = bool(config.get('replace_setup_v1_draft') is True and len(releases) == 1
+                             and releases[0].get('status') == 'draft' and releases[0].get('versionCodes') == ['1']
+                             and previous and previous.get('sha256', '').lower() == SETUP_V1_SHA256)
         if releases and not (len(releases) == 1 and releases[0].get('status') == 'draft' and
-                             releases[0].get('versionCodes') == expected_versions and existing):
+                             releases[0].get('versionCodes') == expected_versions and existing) and not replace_setup:
             raise SafeError('An existing internal release would be affected; stopped without changing it')
         if mode == 'check':
             return {'mode': mode, 'verified': True, 'bundle_already_registered': bool(existing), 'changes_committed': False}
-        if releases:
+        if releases and not replace_setup:
             return {'mode': mode, 'already_saved_draft': True, 'version_code': config['version_code'], 'changes_committed': False}
         if not existing:
             uploaded = client.request('POST', UPLOAD + '/edits/' + urllib.parse.quote(edit, safe='') + '/bundles?uploadType=media', data, raw=True)
@@ -139,7 +146,8 @@ def run(config, client, mode):
             actual = saved.get('releases', [])
             if len(actual) != 1 or actual[0].get('status') != 'draft' or actual[0].get('versionCodes') != expected_versions:
                 raise SafeError('Could not verify the saved internal draft; inspect Play Console')
-        return {'mode': mode, 'draft_verified': True, 'version_code': config['version_code'], 'changes_committed': True, 'sent_for_review': False}
+        return {'mode': mode, 'draft_verified': True, 'version_code': config['version_code'],
+                'changes_committed': True, 'sent_for_review': False, 'replaced_preparation_draft': replace_setup}
     finally:
         if edit:
             try:

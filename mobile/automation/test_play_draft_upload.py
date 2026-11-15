@@ -24,7 +24,7 @@ class FakeGoogle:
         self.content, self.config = content, config
         self.calls, self.edits = [], 0
         self.releases = releases or []
-        self.bundles = [{'versionCode': 1, 'sha256': config['sha256']}] if registered else []
+        self.bundles = [{'versionCode': config['version_code'], 'sha256': config['sha256']}] if registered else []
         self.upload_hash = config['sha256']
 
     def request(self, method, url, body=None, raw=False):
@@ -37,7 +37,7 @@ class FakeGoogle:
         if method == 'DELETE':
             return {}
         if url.startswith(p.UPLOAD):
-            return json.dumps({'versionCode': 1, 'sha256': self.upload_hash}).encode()
+            return json.dumps({'versionCode': self.config['version_code'], 'sha256': self.upload_hash}).encode()
         if url.endswith('/bundles'):
             return {'bundles': self.bundles}
         if url.endswith('/tracks/internal'):
@@ -50,6 +50,46 @@ class FakeGoogle:
 
 
 class DraftUploadTests(unittest.TestCase):
+    def test_replace_only_verified_unpublished_setup_with_internal_v2(self):
+        data, config = fixture(); config.update(version_code=2, replace_setup_v1_draft=True)
+        client = FakeGoogle(data, config, [{'status': 'draft', 'versionCodes': ['1']}])
+        client.bundles = [{'versionCode': 1, 'sha256': p.SETUP_V1_SHA256}]
+        result = p.run(config, client, 'draft')
+        self.assertTrue(result['draft_verified'])
+        self.assertTrue(result['replaced_preparation_draft'])
+        self.assertEqual(client.releases[0]['status'], 'draft')
+        self.assertEqual(client.releases[0]['versionCodes'], ['2'])
+        self.assertFalse(result['sent_for_review'])
+        self.assertTrue(all(url.endswith(':commit?changesNotSentForReview=true') for _, url, _ in client.calls if ':commit' in url))
+
+    def test_wrong_old_bundle_active_release_and_unapproved_replacement_are_preserved(self):
+        for status, digest, flag in [('completed', p.SETUP_V1_SHA256, True),
+                                     ('draft', '0' * 64, True), ('draft', p.SETUP_V1_SHA256, False)]:
+            with self.subTest(status=status, digest=digest, flag=flag):
+                data, config = fixture(); config.update(version_code=2, replace_setup_v1_draft=flag)
+                client = FakeGoogle(data, config, [{'status': status, 'versionCodes': ['1']}])
+                client.bundles = [{'versionCode': 1, 'sha256': digest}]
+                with self.assertRaisesRegex(p.SafeError, 'existing internal release'):
+                    p.run(config, client, 'draft')
+                self.assertFalse(any(method == 'PUT' or ':commit' in url or url.startswith(p.UPLOAD) for method, url, _ in client.calls))
+
+    def test_internal_v2_preflight_does_not_replace_and_saved_v2_is_idempotent(self):
+        data, config = fixture(); config.update(version_code=2, replace_setup_v1_draft=True)
+        client = FakeGoogle(data, config, [{'status': 'draft', 'versionCodes': ['1']}])
+        client.bundles = [{'versionCode': 1, 'sha256': p.SETUP_V1_SHA256}]
+        self.assertTrue(p.run(config, client, 'check')['verified'])
+        self.assertFalse(any(method == 'PUT' or ':commit' in url or url.startswith(p.UPLOAD) for method, url, _ in client.calls))
+        client = FakeGoogle(data, config, [{'status': 'draft', 'versionCodes': ['2']}], registered=True)
+        self.assertTrue(p.run(config, client, 'draft')['already_saved_draft'])
+        self.assertFalse(any(method == 'PUT' or ':commit' in url or url.startswith(p.UPLOAD) for method, url, _ in client.calls))
+
+    def test_replace_flag_does_not_authorize_other_new_versions(self):
+        data, config = fixture(); config.update(version_code=3, replace_setup_v1_draft=True)
+        client = FakeGoogle(data, config)
+        with self.assertRaisesRegex(p.SafeError, 'Only internal version 2'):
+            p.run(config, client, 'draft')
+        self.assertEqual(client.calls, [])
+
     def test_connection_mode_does_not_call_publisher_before_first_upload(self):
         data, config = fixture(); config['initial_console_upload_verified'] = False
         client = FakeGoogle(data, config)
