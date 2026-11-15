@@ -38,5 +38,15 @@
   "internalRolloutUiVerified": true,
   "internalRolloutEvidence": "Latest user screenshot: internal track 有効; latest release 司法書士PASS 内部テスト v2; temporary name com.shihoshoshipass.app (unreviewed)",
   "releaseScope": "Internal testing, one registered owner/tester",
-  "productionReleased": false
+  "productionReleased": false,
+  "monthlyAnnualDraftPricesVerified": true,
+  "monthlyJpy": 500,
+  "annualJpy": 5000,
+  "pricingRegions": [
+    "JP"
+  ],
+  "basePlansActivated": false,
+  "purchaseTestsCompleted": false,
+  "priceReadbackRun": 43719122801,
+  "priceReadbackJob": 132827052573
 }

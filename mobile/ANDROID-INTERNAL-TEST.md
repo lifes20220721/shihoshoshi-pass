@@ -33,8 +33,8 @@ Driveは所有者と既存アップロード用サービスアカウントのrea
 
 ## 商品と認証の未完了事項
 
-Google Playの既存商品shihoshoshi_premiumはあるが、月額500円・年額5,000円の基本プランは未保存。RevenueCat側のカタログ・entitlement・offeringの関連付けは保存済み。Google鍵もRevenueCatへ登録済み。
+Google Playの既存商品shihoshoshi_premiumに、月額500円/P1Mと年額5,000円/P1Y、日本のみの基本プランが保存済み。run43719122801/job132827052573で実ストアを読み戻し、両方DRAFT、月額の既存設定の維持を確認した。有効化と実購入・復元は未実施。RevenueCat側のカタログ・entitlement・offeringの関連付け、Google鍵登録とValid credentialsも確認済み。
 
-RevenueCat画面では商品カタログと購読カタログの読み取りが成功し、購入確認だけ「Google Play package name was not found」。パッケージ名、Googleプロジェクト、購入確認用メール、鍵ID先頭は一致。Google Playの初期設定・テストリリース状態を確認中。内部配信後のrun43699415993/job132767039003でも、商品編集プランには別途権限blockerが2件あり、applyはしていない。購入確認の資格情報はRevenueCat画面で改めて再検証する。
+内部テスト配信後、RevenueCat画面で「Valid credentials」を確認。以前の購入確認パッケージ検索エラーは解消した。ただし、その後のrun43700851572/job132771432423でも、商品編集プランには別途権限blockerが2件あり、applyはしていない。価格の設定は所有者のPlay Console画面で進める。認証の成功と実購入テストの成功は区別する。
 
 価格のハードコードや審査ログインによる課金状態の偽装は行わない。価格はストアSDKの実値を表示する。実購入テスト前にライセンステスター設定も確認する。
