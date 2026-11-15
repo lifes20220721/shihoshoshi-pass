@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {build} from 'esbuild';
+import {validateReviewConfig} from '../src/reviewer-access.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),require=createRequire(import.meta.url);
 const apps=JSON.parse(fs.readFileSync(path.join(root,'apps.json')));
 const localFile=path.join(root,'store-config.local.json');
@@ -52,6 +53,11 @@ for(const[id,app]of Object.entries(apps)) {
   if(!fs.existsSync(source))throw Error('Run node scripts/fetch-sources.mjs first');
   if(fs.readFileSync(path.join(source,'.source-commit'),'utf8').trim()!==app.sourceCommit)throw Error('Source commit does not match apps.json');
   const config={...app,id,revenueCat:{...app.revenueCat,...local[id]?.revenueCat}};
+  if(id==='shihoshoshi'&&local[id]?.reviewAccess) {
+    const r=local[id].reviewAccess;
+    config.reviewAccess={enabled:r.enabled===true,endpoint:r.endpoint,issuer:r.issuer,audience:r.audience,keyId:r.keyId,publicKey:r.publicKey};
+    validateReviewConfig(config.reviewAccess);
+  }
   if(!Number.isInteger(config.samplePerSubject)||config.samplePerSubject<1)throw Error('Invalid free sample limit');
   const sample=samples(id,app,source);
   for(const s of sample.subjects)for(const q of s.questions)if(!q.text||![0,1].includes(q.answer)||!q.explanation)throw Error('Invalid sample '+q.id);

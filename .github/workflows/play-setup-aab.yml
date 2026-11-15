@@ -1,9 +1,14 @@
-name: Build Play setup bundle
+name: Build Android internal test bundle
 
 on:
   pull_request:
     paths:
       - '.github/workflows/play-setup-aab.yml'
+      - 'mobile/src/**'
+      - 'mobile/scripts/build.mjs'
+      - 'mobile/scripts/prepare-internal-android.mjs'
+      - 'mobile/review-access.public.json'
+      - 'mobile/apps.json'
   workflow_dispatch:
 
 permissions:
@@ -17,10 +22,10 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - name: Check out existing app preparation source
+      - name: Check out this exact internal-test source
         uses: actions/checkout@v4
         with:
-          ref: 6ad545d00c964ad4f8490176a725bdfd487fd0b3
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -37,25 +42,40 @@ jobs:
       - run: npm ci
       - run: node scripts/fetch-sources.mjs
       - run: npm test
-      - run: npm run build
+      - name: Build with public Android and reviewer configuration
+        run: |
+          cp review-access.public.json store-config.local.json
+          npm run build
+          node tests/reviewer-ui.cjs
       - run: npm run native -- shihoshoshi android
-      - name: Build unsigned registration bundle
+      - run: node scripts/prepare-internal-android.mjs
+      - name: Build unsigned internal-test bundle
         run: bash native/shihoshoshi/android/gradlew --no-daemon --console=plain -p native/shihoshoshi/android bundleRelease
       - name: Collect bundle and verification inputs
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out/play-setup
-          cp native/shihoshoshi/android/app/build/outputs/bundle/release/app-release.aab out/play-setup/unsigned.aab
-          cp native/shihoshoshi/android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml out/play-setup/AndroidManifest.xml
-          cp apps.json out/play-setup/apps.json
-          tar -czf out/play-setup/built-web-assets.tar.gz -C dist/shihoshoshi .
-          cd out/play-setup
-          sha256sum unsigned.aab AndroidManifest.xml apps.json built-web-assets.tar.gz > SHA256SUMS
-      - name: Save registration build for local signing
+          mkdir -p out/internal-v2
+          cp native/shihoshoshi/android/app/build/outputs/bundle/release/app-release.aab out/internal-v2/unsigned.aab
+          cp native/shihoshoshi/android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml out/internal-v2/AndroidManifest.xml
+          cp apps.json review-access.public.json out/internal-v2/
+          tar -czf out/internal-v2/built-web-assets.tar.gz -C dist/shihoshoshi .
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          Path('out/internal-v2/build-provenance.json').write_text(json.dumps({
+              'repository':'lifes20220721/shihoshoshi-pass',
+              'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+              'package':'com.shihoshoshipass.app','version_code':2,'version_name':'1.1.0-internal',
+              'purpose':'Internal test candidate; no upload or release performed',
+              'purchases_tested':False,'released':False},indent=2)+'\n')
+          PY
+          cd out/internal-v2
+          sha256sum unsigned.aab AndroidManifest.xml apps.json review-access.public.json built-web-assets.tar.gz build-provenance.json > SHA256SUMS
+      - name: Save internal-test build for local signing
         uses: actions/upload-artifact@v4
         with:
-          name: shihoshoshi-play-setup-unsigned
-          path: mobile/out/play-setup/
+          name: shihoshoshi-internal-v2-unsigned
+          path: mobile/out/internal-v2/
           if-no-files-found: error
           retention-days: 7

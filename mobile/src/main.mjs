@@ -6,6 +6,7 @@ import {Share} from '@capacitor/share';
 import {LocalNotifications} from '@capacitor/local-notifications';
 import {Purchases} from '@revenuecat/purchases-capacitor';
 import {Billing} from './billing.mjs';
+import {ReviewerAccess,canStudy} from './reviewer-access.mjs';
 import {exportBackup, validateBackup, restoreBackup, allowedKey} from './backup.mjs';
 import config from 'app-config';
 import sample from 'sample-data';
@@ -20,6 +21,8 @@ if (!demo || typeof demo !== 'object' || Array.isArray(demo)) demo = {};
 demo.positions ||= {}; demo.answers ||= {};
 let route = 'home', currentSubject = null, currentIndex = 0, answered = false, toastTimer;
 const billing = new Billing({sdk: Purchases, platform: Capacitor.getPlatform(), config, onChange: billingChanged});
+const reviewer = new ReviewerAccess({config:config.reviewAccess,onChange:billingChanged});
+const fullAccess = () => canStudy(billing,reviewer);
 function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 6500); }
 function action(id, callback) { const element=$(id); if(element) element.onclick=()=>Promise.resolve().then(callback).catch(e=>toast(e.message||'操作を完了できませんでした。')); }
 function saveDemo() { try { localStorage.setItem(demoKey,JSON.stringify(demo)); } catch { toast('学習記録を保存できませんでした。端末の空き容量を確認してください。'); } }
@@ -27,16 +30,17 @@ function page(name, content) { route=name; $('main').innerHTML=content; window.s
 function footer() { return '<footer><button class="link" id="privacy">プライバシー</button><button class="link" id="terms">利用規約</button><button class="link" id="support">お問い合わせ</button></footer>'; }
 function legalActions() { action('privacy',()=>legal('privacy')); action('terms',()=>legal('terms')); action('support',()=>legal('support')); }
 function billingChanged() {
-  if (!$('studyArea').hidden && !billing.active) { closeStudy(true); toast('購読状況をご確認ください。無料体験は引き続き利用できます。'); }
+  if (!$('studyArea').hidden && !fullAccess()) { closeStudy(true); toast('利用権限を確認できませんでした。購読状況または審査用アクセスをご確認ください。'); }
   if(route==='plans') plans(); else if(route==='home') home();
+  else if(route==='reviewer'&&!reviewer.active&&!$('reviewLogin')) reviewerPage();
 }
 function home() {
-  page('home',`<section class="card hero"><div class="eyebrow">毎日の積み重ねが、合格への一歩</div><h2>今日も、一問から。</h2><p>${esc(config.name)}を無料で体験できます。各科目の○×問題を繰り返し学習でき、途中位置を自動で保存します。</p><div class="actions"><button class="primary" id="demo">無料の問題を学ぶ</button><button id="full">${billing.active?'全機能で学習を再開':'全機能・購読プランを見る'}</button></div>${billing.active?'<p><span class="badge">購読中</span></p>':''}</section><section class="card"><h3>アプリで続ける学習</h3><p class="muted">教材を端末に収録。通信がない場所でも学習できます。条文の原文など外部資料には通信が必要です。</p><div class="grid"><button id="settings">学習通知・バックアップ</button><button id="purchases">購読・購入の復元</button></div></section>${footer()}`);
-  action('demo',subjects);action('full',()=>billing.active?openStudy():plans());action('settings',settings);action('purchases',plans);legalActions();
+  page('home',`<section class="card hero"><div class="eyebrow">毎日の積み重ねが、合格への一歩</div><h2>今日も、一問から。</h2><p>${esc(config.name)}を無料で体験できます。各科目の○×問題を繰り返し学習でき、途中位置を自動で保存します。</p><div class="actions"><button class="primary" id="demo">無料の問題を学ぶ</button><button id="full">${fullAccess()?'全機能で学習を再開':'全機能・購読プランを見る'}</button></div>${billing.active?'<p><span class="badge">購読中</span></p>':''}</section><section class="card"><h3>アプリで続ける学習</h3><p class="muted">教材を端末に収録。通信がない場所でも学習できます。条文の原文など外部資料には通信が必要です。</p><div class="grid"><button id="settings">学習通知・バックアップ</button><button id="purchases">購読・購入の復元</button></div></section>${footer()}`);
+  action('demo',subjects);action('full',()=>fullAccess()?openStudy():plans());action('settings',settings);action('purchases',plans);legalActions();
 }
 function subjects() {
   page('subjects',`<h2>無料体験の科目を選ぶ</h2><p class="muted">各科目${config.samplePerSubject}問まで。回数制限なく学べます。</p><div class="actions">${sample.subjects.map(s=>`<button class="subject" data-subject="${esc(s.id)}"><span><b>${esc(s.name)}</b><small>${s.questions.length}問${demo.positions[s.id]?'・続きから':''}</small></span><span>→</span></button>`).join('')}</div><button class="link" id="all">全問題・テキストを見る</button>`);
-  document.querySelectorAll('[data-subject]').forEach(b=>b.onclick=()=>startDemo(b.dataset.subject));action('all',()=>billing.active?openStudy():plans());
+  document.querySelectorAll('[data-subject]').forEach(b=>b.onclick=()=>startDemo(b.dataset.subject));action('all',()=>fullAccess()?openStudy():plans());
 }
 function startDemo(id) {
   currentSubject=sample.subjects.find(s=>s.id===id); if(!currentSubject?.questions.length)return;
@@ -63,18 +67,33 @@ function plans() {
   action('manage',()=>openExternal(Capacitor.getPlatform()==='ios'?'https://apps.apple.com/account/subscriptions':'https://play.google.com/store/account/subscriptions'));legalActions();
 }
 function openStudy() {
-  if(!billing.active){plans();return;}
+  if(!fullAccess()){plans();return;}
   if(!$('studyFrame').firstChild){const iframe=document.createElement('iframe');iframe.title=config.name+' 学習画面';iframe.src='./study/index.html';$('studyFrame').appendChild(iframe);}
   $('studyArea').hidden=false;
 }
 function closeStudy(remove=false) { $('studyArea').hidden=true;if(remove)$('studyFrame').replaceChildren(); }
+function reviewerPage() {
+  if(!reviewer.enabled){settings();return;}
+  if(reviewer.active) {
+    page('reviewer','<section class="card"><h2>審査用アクセス / Reviewer access</h2><p role="status">Reviewer access verified. 全学習機能を確認できます。</p><p>購入・定期購読は不要です。利用権限はオンラインで定期的に確認します。</p><div class="actions"><button id="reviewStudy" class="primary">全機能で学習する / Open full study</button><button id="reviewLogout">審査用アクセスからログアウト / Sign out</button></div></section>');
+    action('reviewStudy',openStudy);action('reviewLogout',async()=>{closeStudy(true);await reviewer.logout();if(route==='reviewer')reviewerPage()});return;
+  }
+  page('reviewer','<section class="card"><h2>審査用アクセス / Reviewer access</h2><p>運営者が発行したアカウントで認証してください。無料体験や通常の購読はログイン不要です。</p><form id="reviewLogin" method="post" action="#"><label>Username<input id="reviewUsername" autocomplete="username" required maxlength="100" autocapitalize="none" spellcheck="false"></label><label>Password<input id="reviewPassword" type="password" autocomplete="current-password" required maxlength="256"></label><button id="reviewSignIn" type="submit" class="primary">ログイン / Sign in</button><p id="reviewError" role="alert"></p></form></section>');
+  $('reviewLogin').onsubmit=async event=>{
+    event.preventDefault();const username=$('reviewUsername').value,password=$('reviewPassword').value;
+    $('reviewPassword').value='';$('reviewSignIn').disabled=true;$('reviewError').textContent='';
+    try{await reviewer.login(username,password);if(route==='reviewer')reviewerPage();}
+    catch(e){if(route==='reviewer'){$('reviewError').textContent=e.message;$('reviewSignIn').disabled=false;}}
+  };
+}
 async function openExternal(href) {
   const url=new URL(href,config.website);
   if(url.protocol!=='https:')throw Error('このリンクはアプリから開けません。');
   if(native)await Browser.open({url:url.href});else window.open(url.href,'_blank','noopener,noreferrer');
 }
 function settings() {
-  page('settings',`<h2>学習を続ける設定</h2><section class="card"><h3>毎日の学習通知</h3><p>指定した時間に、この端末へ学習を促す通知を表示します。通知を有効にする際に許可を求めます。</p><label>通知時刻 <input id="reminderTime" type="time" value="20:00"></label><div class="actions"><button id="reminder" ${native?'':'disabled'}>この時間に通知する</button><button id="cancelReminder" ${native?'':'disabled'}>通知を停止する</button></div></section><section class="card"><h3>学習記録</h3><p>履歴はこの端末に保存されます。機種変更や再インストールの前にバックアップしてください。購読の復元と学習記録の復元は別です。</p><div class="actions"><button id="export">バックアップを保存・共有</button><button id="import">バックアップから復元</button><button id="clear">学習記録を削除</button></div><p class="muted">Web版のバックアップは、全機能の学習画面にある既存のバックアップ機能から取り込めます。ブラウザからアプリへ履歴が自動で移ることはありません。</p></section>${footer()}`);
+  page('settings',`<h2>学習を続ける設定</h2>${reviewer.enabled?'<section class="card"><h3>審査用アクセス / Reviewer access</h3><p>運営者が発行した審査用アカウントをお持ちの方はこちらから認証できます。通常の購読には影響しません。</p><button id="reviewerAccess">審査用アクセス / Reviewer access</button></section>':''}<section class="card"><h3>毎日の学習通知</h3><p>指定した時間に、この端末へ学習を促す通知を表示します。通知を有効にする際に許可を求めます。</p><label>通知時刻 <input id="reminderTime" type="time" value="20:00"></label><div class="actions"><button id="reminder" ${native?'':'disabled'}>この時間に通知する</button><button id="cancelReminder" ${native?'':'disabled'}>通知を停止する</button></div></section><section class="card"><h3>学習記録</h3><p>履歴はこの端末に保存されます。機種変更や再インストールの前にバックアップしてください。購読の復元と学習記録の復元は別です。</p><div class="actions"><button id="export">バックアップを保存・共有</button><button id="import">バックアップから復元</button><button id="clear">学習記録を削除</button></div><p class="muted">Web版のバックアップは、全機能の学習画面にある既存のバックアップ機能から取り込めます。ブラウザからアプリへ履歴が自動で移ることはありません。</p></section>${footer()}`);
+  action('reviewerAccess',reviewerPage);
   action('reminder',async()=>{const time=$('reminderTime').value;if(!/^\d{2}:\d{2}$/.test(time))throw Error('通知時刻を選んでください。');const permission=await LocalNotifications.requestPermissions();if(permission.display!=='granted')throw Error('通知が許可されていません。端末の設定をご確認ください。');const[hour,minute]=time.split(':').map(Number);await LocalNotifications.cancel({notifications:[{id:1001}]});await LocalNotifications.schedule({notifications:[{id:1001,title:config.name,body:'今日も一問から、学習を始めましょう。',schedule:{on:{hour,minute},repeats:true}}]});toast('学習通知を設定しました。端末の省電力設定などにより時刻が前後する場合があります。');});
   action('cancelReminder',async()=>{await LocalNotifications.cancel({notifications:[{id:1001}]});toast('通知を停止しました。');});
   action('export',async()=>{const text=JSON.stringify(exportBackup(localStorage,config),null,2),filename=`${config.id}-backup-${Date.now()}.json`;if(native){const file=await Filesystem.writeFile({path:filename,data:text,directory:Directory.Cache,encoding:Encoding.UTF8});await Share.share({title:'学習記録のバックアップ',files:[file.uri]});}else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});
@@ -87,12 +106,13 @@ function legal(kind) {
     terms:`<h2>利用規約</h2><p>本アプリは試験学習を支援する教材です。合格や特定年度の出題を保証するものではありません。解説は学習用で、個別案件への法律相談ではありません。受験年度の公式情報・法令をご確認ください。</p><p>無料範囲は各科目の体験問題です。月額・年額の購読期間中は本アプリの全学習機能を利用できます。価格・課金期間は購入画面に表示します。購読の変更・解約・返金は購入したストアの手続き・規定に従います。</p><p>購入復元には同じストアアカウントをご利用ください。OS間や別の資格アプリとの購入共有は提供していません。購読を終了しても学習履歴は端末に残ります。</p><p>著作権は原著作者・出典の権利者に帰属します。出典情報は学習画面から確認できます。iOSではAppleの標準使用許諾契約も適用されます。</p><p><a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Apple標準使用許諾契約</a></p>`,
     support:'<h2>運営・お問い合わせ</h2><p>運営：lifes20220721</p><p>問題の誤り、不具合、購読については下記メールへご連絡ください。</p>'
   };
-  page('legal',`<article class="card legal">${text[kind]}<p>お問い合わせ：${esc(config.supportEmail)}</p><p class="muted">最終更新日：2026年11月11日</p></article>`);
+  page('legal',`<article class="card legal">${text[kind]}${kind==='privacy'&&reviewer.enabled?'<h3>審査用アカウント</h3><p>審査用ログインでは、運営者の認証サーバーへユーザー名とパスワードを暗号化通信で送信します。サーバーはパスワードのハッシュ、アカウントの有効期間と権限を管理し、短時間有効な利用権限を発行します。接続元IPに基づく一時的な試行回数制限を行います。学習記録は送信しません。アプリのセッションはメモリだけに保持し、ログアウトまたはアプリ終了時に消去します。審査用アカウントは運営者が停止・削除できます。</p>':''}<p>お問い合わせ：${esc(config.supportEmail)}</p><p class="muted">最終更新日：2026年11月11日</p></article>`);
   $('main').querySelectorAll('a[href]').forEach(a=>a.onclick=e=>{e.preventDefault();openExternal(a.href).catch(err=>toast(err.message))});
 }
 $('backupFile').onchange=async()=>{try{const file=$('backupFile').files[0];if(!file)return;const values=validateBackup(await file.text(),config);if(!confirm('バックアップに含まれる学習記録で上書きしますか？'))return;closeStudy(true);restoreBackup(localStorage,values);demo=JSON.parse(localStorage.getItem(demoKey)||'{"positions":{},"answers":{}}');demo.positions||={};demo.answers||={};toast('学習記録を復元しました。');}catch(e){toast(e.message||'バックアップを読み込めませんでした。')}finally{$('backupFile').value='';}};
 window.addEventListener('message',event=>{const frame=$('studyFrame').firstChild;if(event.source!==frame?.contentWindow||event.origin!==location.origin||event.data?.type!=='pass-external-link')return;openExternal(event.data.href).catch(e=>toast(e.message));});
 $('appName').textContent=config.name;document.title=config.name;$('homeButton').onclick=home;$('closeStudy').onclick=()=>{closeStudy();home()};
-if(native){App.addListener('appStateChange',state=>{if(state.isActive)billing.refresh()});App.addListener('backButton',()=>{if(!$('studyArea').hidden){closeStudy();home()}else if(route!=='home')home()});}
-setInterval(()=>{if(!$('studyArea').hidden&&!billing.active)billingChanged()},30000);
+if(native){App.addListener('appStateChange',state=>{if(state.isActive){billing.refresh();reviewer.refresh()}});App.addListener('backButton',()=>{if(!$('studyArea').hidden){closeStudy();home()}else if(route!=='home')home()});}
+setInterval(()=>{if(!$('studyArea').hidden&&!fullAccess())billingChanged()},1000);
+setInterval(()=>reviewer.refresh(),60000);
 home();billing.init();

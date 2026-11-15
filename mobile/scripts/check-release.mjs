@@ -1,10 +1,15 @@
 import fs from 'node:fs';
+import {validateReviewConfig} from '../src/reviewer-access.mjs';
 const apps=JSON.parse(fs.readFileSync(new URL('../apps.json',import.meta.url)));
 const localURL=new URL('../store-config.local.json',import.meta.url);
 const local=fs.existsSync(localURL)?JSON.parse(fs.readFileSync(localURL)):{};
 const errors=[];
 for(const[id,app]of Object.entries(apps)) {
   const settings=local[id]||{};
+  if(id==='shihoshoshi'&&settings.reviewAccess?.enabled) {
+    try { validateReviewConfig(settings.reviewAccess); } catch { errors.push(`${id}: 審査用アクセスの公開設定が不正です`); }
+    if(settings.reviewAccessVerified!==true)errors.push(`${id}: 公開先の審査用認証とAndroid実機での全機能アクセスを確認してください`);
+  }
   for(const platform of ['ios','android']) {
     const key=settings.revenueCat?.[platform]||app.revenueCat[platform];
     if(!key||key.startsWith('test_')||!(platform==='ios'?key.startsWith('appl_'):key.startsWith('goog_')))errors.push(`${id}: ${platform} の公開用RevenueCat SDKキーが未設定です`);
