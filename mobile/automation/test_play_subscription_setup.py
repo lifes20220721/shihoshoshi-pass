@@ -48,10 +48,40 @@ class CatalogTests(unittest.TestCase):
         patches = [(url, body) for method, url, body in c.calls if method == 'PATCH']
         self.assertEqual(len(patches), 1)
         self.assertIn('regionsVersion.version=2022%2F02', patches[0][0])
+        self.assertIn('updateMask=basePlans&', patches[0][0])
+        self.assertNotIn('listings', patches[0][1])
         self.assertEqual({plan['basePlanId']: plan['regionalConfigs'][0]['price']['units']
                           for plan in patches[0][1]['basePlans']}, {'monthly': '500', 'annual': '5000'})
         self.assertTrue(all('/edits' not in url and ':activate' not in url for _, url, _ in c.calls))
         self.assertTrue(all(method in ('GET', 'PATCH') for method, _, _ in c.calls))
+
+    def test_adds_only_annual_and_preserves_owner_created_monthly_exactly(self):
+        c = FakeCatalog()
+        monthly = {'basePlanId': 'monthly', 'state': 'DRAFT',
+            'autoRenewingBasePlanType': {'billingPeriodDuration': 'P1M', 'gracePeriodDuration': 'P7D',
+                                        'legacyCompatible': True},
+            'regionalConfigs': [{'regionCode': 'JP', 'newSubscriberAvailability': True,
+                'price': {'currencyCode': 'JPY', 'units': '500'}}], 'offerTags': [{'tag': 'existing'}]}
+        c.product['basePlans'] = [copy.deepcopy(monthly)]
+        c.product['taxAndCompliance'] = {'eeaWithdrawalRightType': 'WITHDRAWAL_RIGHT_SERVICE'}
+        result = p.run(c, CONFIG, 'catalog-draft')
+        self.assertTrue(result['draft_plans_verified'])
+        self.assertEqual(c.product['basePlans'][0], monthly)
+        self.assertEqual(c.product['basePlans'][1]['basePlanId'], 'annual')
+        self.assertEqual(c.product['basePlans'][1]['autoRenewingBasePlanType']['billingPeriodDuration'], 'P1Y')
+        self.assertEqual(c.product['listings'], [{'languageCode': 'ja-JP', 'title': p.TITLE}])
+        self.assertEqual(c.product['taxAndCompliance'], {'eeaWithdrawalRightType': 'WITHDRAWAL_RIGHT_SERVICE'})
+
+    def test_partial_monthly_with_active_state_or_wrong_price_is_not_modified(self):
+        for state, amount in [('ACTIVE', '500'), ('DRAFT', '550')]:
+            c = FakeCatalog()
+            c.product['basePlans'] = [{'basePlanId': 'monthly', 'state': state,
+                'autoRenewingBasePlanType': {'billingPeriodDuration': 'P1M'},
+                'regionalConfigs': [{'regionCode': 'JP', 'newSubscriberAvailability': True,
+                    'price': {'currencyCode': 'JPY', 'units': amount}}]}]
+            with self.assertRaises(p.SafeError):
+                p.run(c, CONFIG, 'catalog-draft')
+            self.assertFalse(any(method == 'PATCH' for method, _, _ in c.calls))
 
     def test_permission_denial_stops_before_any_mutation(self):
         class Denied(FakeCatalog):

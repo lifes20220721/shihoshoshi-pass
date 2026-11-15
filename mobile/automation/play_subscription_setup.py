@@ -10,7 +10,6 @@ from play_draft_upload import GoogleClient, PACKAGE, PUBLISHER, SafeError
 
 TITLE = '司法書士PASS 全機能プラン'
 EXPECTED = {'monthly': ('P1M', '500'), 'annual': ('P1Y', '5000')}
-BENEFITS = ['全11科目の教材と問題演習', '学習履歴の保存と復習']
 # Official RegionsVersion supports older published versions. Japan/JPY is
 # unchanged in 2022/02; no currency conversion is needed for fixed JP prices.
 REGIONS_VERSION = '2022/02'
@@ -53,8 +52,10 @@ def summary(product):
             'base_plans': product.get('basePlans', [])}
 
 
-def verify_plans(plans):
-    if len(plans) != 2 or {p.get('basePlanId') for p in plans} != set(EXPECTED):
+def verify_plans(plans, allow_partial=False):
+    identifiers = {p.get('basePlanId') for p in plans}
+    if (len(identifiers) != len(plans) or not identifiers <= set(EXPECTED)
+            or not allow_partial and identifiers != set(EXPECTED)):
         raise SafeError('Existing base plans differ; no replacement or price migration is permitted')
     for plan in plans:
         duration, amount = EXPECTED[plan['basePlanId']]
@@ -97,31 +98,32 @@ def run(raw_client, config, mode):
     listings = current.get('listings', [])
     if not any(l.get('title') == TITLE and l.get('languageCode') in ('ja-JP', 'ja') for l in listings):
         raise SafeError('Confirm Japanese subscription title before writing')
-    if current.get('basePlans'):
-        verify_plans(current['basePlans'])
+    previous_plans = copy.deepcopy(current.get('basePlans', []))
+    verify_plans(previous_plans, allow_partial=True)
+    previous_ids = {p['basePlanId'] for p in previous_plans}
+    if previous_ids == set(EXPECTED):
         return {'mode': mode, 'draft_plans_verified': True, 'already_configured': True,
                 'product_id': product_id, 'changes_saved': False, 'activated': False}
-    plans = [{'basePlanId': identifier,
+    plans = previous_plans + [{'basePlanId': identifier,
               'autoRenewingBasePlanType': {'billingPeriodDuration': duration},
               'regionalConfigs': [{'regionCode': 'JP', 'newSubscriberAvailability': True,
                   'price': {'currencyCode': 'JPY', 'units': amount, 'nanos': 0}}]}
-             for identifier, (duration, amount) in EXPECTED.items()]
-    updated_listings = copy.deepcopy(listings)
-    for listing in updated_listings:
-        if listing.get('languageCode') in ('ja-JP', 'ja') and not listing.get('benefits'):
-            listing['benefits'] = BENEFITS.copy()
+             for identifier, (duration, amount) in EXPECTED.items() if identifier not in previous_ids]
     # Stop if the owner changed the catalog while this task was preparing its patch.
     if client.request('GET', url) != current:
         raise SafeError('Catalog changed concurrently; stopped without writing')
-    body = {'packageName': PACKAGE, 'productId': product_id,
-            'basePlans': plans, 'listings': updated_listings}
-    query = urlencode({'updateMask': 'basePlans,listings', 'regionsVersion.version': REGIONS_VERSION})
+    body = {'packageName': PACKAGE, 'productId': product_id, 'basePlans': plans}
+    query = urlencode({'updateMask': 'basePlans', 'regionsVersion.version': REGIONS_VERSION})
     client.request('PATCH', url + '?' + query, body)
     # The API creates plans as DRAFT. This program has no activation endpoint.
     saved = client.request('GET', url)
     verify_plans(saved.get('basePlans', []))
-    if saved.get('packageName') != PACKAGE or saved.get('productId') != product_id or saved.get('listings') != updated_listings:
+    if (saved.get('packageName') != PACKAGE or saved.get('productId') != product_id
+            or any(saved.get(k) != v for k, v in current.items() if k != 'basePlans')):
         raise SafeError('Could not verify saved catalog metadata; inspect Play Console')
+    saved_by_id = {p['basePlanId']: p for p in saved.get('basePlans', [])}
+    if any(saved_by_id[p['basePlanId']] != p for p in previous_plans):
+        raise SafeError('A pre-existing draft plan changed; inspect Play Console')
     return {'mode': mode, 'draft_plans_verified': True, 'product_id': product_id,
             'monthly_jpy': 500, 'annual_jpy': 5000, 'region': 'JP',
             'changes_saved': True, 'activated': False, 'sent_for_review': False}
