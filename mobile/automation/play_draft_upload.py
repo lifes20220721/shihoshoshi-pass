@@ -125,7 +125,9 @@ def run(config, client, mode):
                              releases[0].get('versionCodes') == expected_versions and existing) and not replace_setup:
             raise SafeError('An existing internal release would be affected; stopped without changing it')
         if mode == 'check':
-            return {'mode': mode, 'verified': True, 'bundle_already_registered': bool(existing), 'changes_committed': False}
+            return {'mode': mode, 'verified': True, 'bundle_already_registered': bool(existing),
+                    'current_internal_release_versions': [r.get('versionCodes', []) for r in releases],
+                    'current_internal_release_statuses': [r.get('status') for r in releases], 'changes_committed': False}
         if releases and not replace_setup:
             return {'mode': mode, 'already_saved_draft': True, 'version_code': config['version_code'], 'changes_committed': False}
         if not existing:
