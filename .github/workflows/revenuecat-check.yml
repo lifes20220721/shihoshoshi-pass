@@ -31,3 +31,8 @@ jobs:
         env:
           REVENUECAT_AUTOMATION_KEY: ${{ secrets.REVENUECAT_AUTOMATION_KEY }}
         run: python mobile/automation/revenuecat_setup.py
+
+      - name: Read the two Google Play products through RevenueCat
+        env:
+          REVENUECAT_AUTOMATION_KEY: ${{ secrets.REVENUECAT_AUTOMATION_KEY }}
+        run: python mobile/automation/revenuecat_store_check.py
