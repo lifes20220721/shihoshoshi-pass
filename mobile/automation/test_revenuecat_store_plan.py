@@ -1,4 +1,7 @@
 import unittest
+import io
+import json
+import urllib.error
 from unittest.mock import patch
 
 from revenuecat_check import SetupError
@@ -6,6 +9,18 @@ from revenuecat_store_plan import PLANS, PlanClient, desired_states, run
 
 
 class StorePlanTests(unittest.TestCase):
+    def test_schema_diagnostics_redact_tokens_and_hide_raw_body(self):
+        client = PlanClient('sk_' + 'x' * 32)
+        body = {'message': 'description missing; sk_' + 'z' * 32, 'other': 'PRIVATE DATA'}
+        error = urllib.error.HTTPError('https://api.revenuecat.com', 400, 'Bad Request', {},
+                                       io.BytesIO(json.dumps(body).encode()))
+        with patch.object(client.opener, 'open', side_effect=error):
+            with self.assertRaises(SetupError) as caught:
+                client.post(PLANS, {'desired_states': desired_states()})
+        self.assertIn('description missing', str(caught.exception))
+        self.assertNotIn('sk_', str(caught.exception))
+        self.assertNotIn('PRIVATE DATA', str(caught.exception))
+
     def test_draft_only_japan_prices(self):
         states = desired_states()
         self.assertEqual(len(states), 2)
@@ -17,7 +32,7 @@ class StorePlanTests(unittest.TestCase):
             self.assertEqual(plan['auto_renewing_base_plan_type']['billing_period_duration'], period)
             self.assertEqual(plan['regional_configs'], {'JP': {'new_subscriber_availability': True,
                 'price': {'amount_micros': amount * 1000000, 'currency': 'JPY'}}})
-            self.assertEqual(plan['other_regions_config'], {'new_subscriber_availability': False})
+            self.assertNotIn('other_regions_config', plan)
 
     def test_apply_discard_and_modified_payload_rejected(self):
         client = PlanClient('sk_' + 'x' * 32)

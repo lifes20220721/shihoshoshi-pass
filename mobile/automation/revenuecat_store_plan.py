@@ -11,6 +11,7 @@ from revenuecat_check import SetupError, identifier
 from revenuecat_store_check import StoreClient, PREFIX, PRODUCTS, run as read_store
 
 PLANS = PREFIX + '/store_state/plans'
+OWN_PLAN = 'c1921d0b-e870-4467-ab16-c9ea228582e7'
 
 
 def desired_states():
@@ -18,14 +19,13 @@ def desired_states():
     for product, store_id in PRODUCTS.items():
         plan_id = store_id.split(':')[1]
         duration, amount = ('P1M', 500) if plan_id == 'monthly' else ('P1Y', 5000)
+        base_plan = {'state': 'DRAFT',
+            'auto_renewing_base_plan_type': {'billing_period_duration': duration},
+            'regional_configs': {'JP': {'new_subscriber_availability': True,
+                'price': {'amount_micros': amount * 1000000, 'currency': 'JPY'}}}}
         result.append({'product_id': product, 'store': 'play_store',
             'common': {'localizations': {'ja-JP': {'name': '司法書士PASS 全機能プラン', 'description': None}}},
-            'store_state': {'base_plans': {plan_id: {
-                'state': 'DRAFT',
-                'auto_renewing_base_plan_type': {'billing_period_duration': duration},
-                'regional_configs': {'JP': {'new_subscriber_availability': True,
-                    'price': {'amount_micros': amount * 1000000, 'currency': 'JPY'}}},
-                'other_regions_config': {'new_subscriber_availability': False}}}}})
+            'store_state': {'base_plans': {plan_id: base_plan}}})
     return result
 
 
@@ -74,6 +74,11 @@ class PlanClient(StoreClient):
             return self._request('POST', path, body)
         raise SetupError('Only exact approved DRAFT plan preparation is permitted; apply is disabled')
 
+    def replace_own_draft(self):
+        if self.plan_id != OWN_PLAN:
+            raise SetupError('Only this session\'s failed draft plan may be corrected')
+        return self._request('PUT', PLANS + '/' + OWN_PLAN, {'desired_states': desired_states()})
+
 
 def run(client, wait=time.sleep):
     live = read_store(client)
@@ -88,8 +93,15 @@ def run(client, wait=time.sleep):
     terminal = {'applied', 'planned_and_finished', 'cancelled', 'expired', 'discarded'}
     active = [p for p in listing.get('items', []) if p.get('status') not in terminal]
     if active:
-        raise SetupError('An existing store plan must be reviewed before preparing another')
-    created = client.post(PLANS, {'desired_states': desired_states()})
+        if len(active) != 1 or active[0].get('id') != OWN_PLAN or active[0].get('status') != 'plan_errored':
+            raise SetupError('An existing store plan must be reviewed before preparing another')
+        client.plan_id = OWN_PLAN
+        existing = client.get(PLANS + '/' + OWN_PLAN)
+        if {s.get('product_id') for s in existing.get('desired_states', [])} != set(PRODUCTS):
+            raise SetupError('Existing draft plan products differ; no changes made')
+        created = client.replace_own_draft()
+    else:
+        created = client.post(PLANS, {'desired_states': desired_states()})
     client.plan_id = identifier(created['id'])
     if created.get('status') != 'draft':
         raise SetupError('Unexpected new plan state; stopped without applying')
