@@ -116,10 +116,50 @@ def run(client, wait=time.sleep):
     raise SetupError('Plan still computing; inspect the existing plan before retrying')
 
 
+def recheck(client, wait=time.sleep):
+    """Recompute the same saved preview; do not edit or apply desired state."""
+    read_store(client)
+    client.plan_id = OWN_PLAN
+    plan = client.get(PLANS + '/' + OWN_PLAN)
+    if plan.get('status') != 'planned' or 'plan' not in plan.get('actions', []) and 'edit' not in plan.get('actions', []):
+        raise SetupError('The existing price preview is not available for rechecking')
+    states = plan.get('desired_states', [])
+    if len(states) != 2 or {s.get('product_id') for s in states} != set(PRODUCTS):
+        raise SetupError('Saved preview products changed; no request sent')
+    for state in states:
+        key = PRODUCTS[state['product_id']].split(':')[1]
+        period, amount = ('P1M', 500000000) if key == 'monthly' else ('P1Y', 5000000000)
+        plans = state.get('store_state', {}).get('base_plans', {})
+        base = plans.get(key, {})
+        regions = base.get('regional_configs', {})
+        price = regions.get('JP', {}).get('price', {})
+        if (state.get('store') != 'play_store' or set(plans) != {key} or base.get('state') != 'DRAFT'
+                or base.get('auto_renewing_base_plan_type', {}).get('billing_period_duration') != period
+                or set(regions) != {'JP'} or price.get('currency') != 'JPY' or price.get('amount_micros') != amount
+                or regions['JP'].get('new_subscriber_availability') is not True
+                or base.get('other_regions_config') or base.get('offers')):
+            raise SetupError('Saved preview differs from approved Japan-only draft prices')
+    refreshed = client.replace_own_draft()
+    if refreshed.get('status') != 'draft':
+        raise SetupError('Existing preview could not be reopened; no store changes applied')
+    client.post(PLANS + '/' + OWN_PLAN + '/actions/plan', {})
+    for _ in range(30):
+        plan = client.get(PLANS + '/' + OWN_PLAN)
+        if plan.get('status') in ('planned', 'planned_and_finished', 'plan_errored'):
+            warnings = plan.get('warnings', []) + [w for item in plan.get('plan_items', []) for w in item.get('warnings', [])]
+            return {'mode': 'revenuecat-store-recheck', 'plan': plan,
+                    'blocker_count': sum(w.get('severity') == 'blocker' for w in warnings),
+                    'store_changes_applied': False, 'released': False}
+        wait(2)
+    raise SetupError('Existing preview is still computing; no store changes applied')
+
+
 if __name__ == '__main__':
     try:
         request = json.loads(Path('mobile/automation/revenuecat-check-request.json').read_text())
-        if request.get('prepare_store_plan') is True:
+        if request.get('recheck_store_plan') is True:
+            print(json.dumps(recheck(PlanClient(os.environ.get('REVENUECAT_AUTOMATION_KEY'))), ensure_ascii=False))
+        elif request.get('prepare_store_plan') is True:
             print(json.dumps(run(PlanClient(os.environ.get('REVENUECAT_AUTOMATION_KEY'))), ensure_ascii=False))
         else:
             print(json.dumps({'mode': 'revenuecat-store-plan', 'skipped': True, 'store_changes_applied': False}))

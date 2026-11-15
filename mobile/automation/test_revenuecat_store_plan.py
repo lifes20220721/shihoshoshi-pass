@@ -5,10 +5,33 @@ import urllib.error
 from unittest.mock import patch
 
 from revenuecat_check import SetupError
-from revenuecat_store_plan import PLANS, PlanClient, desired_states, run
+from revenuecat_store_plan import PLANS, OWN_PLAN, PlanClient, desired_states, run, recheck
 
 
 class StorePlanTests(unittest.TestCase):
+    def test_recheck_refreshes_only_own_preview_and_reports_blockers(self):
+        client = PlanClient('sk_' + 'x' * 32)
+        existing = {'status': 'planned', 'actions': ['edit'], 'desired_states': desired_states()}
+        result_plan = {'status': 'planned', 'plan_items': [{'warnings': [{'severity': 'blocker'}]}]}
+        with patch('revenuecat_store_plan.read_store'), patch.object(client, '_request',
+                side_effect=[existing, {'status': 'draft'}, {}, result_plan]) as request:
+            result = recheck(client)
+        self.assertEqual(result['blocker_count'], 1)
+        self.assertFalse(result['store_changes_applied'])
+        self.assertEqual([(c.args[0], c.args[1]) for c in request.call_args_list], [
+            ('GET', PLANS + '/' + OWN_PLAN), ('PUT', PLANS + '/' + OWN_PLAN),
+            ('POST', PLANS + '/' + OWN_PLAN + '/actions/plan'), ('GET', PLANS + '/' + OWN_PLAN)])
+
+    def test_recheck_refuses_changed_price_before_any_write(self):
+        client = PlanClient('sk_' + 'x' * 32)
+        states = desired_states()
+        states[0]['store_state']['base_plans']['monthly']['regional_configs']['JP']['price']['amount_micros'] = 1
+        with patch('revenuecat_store_plan.read_store'), patch.object(client, '_request',
+                return_value={'status': 'planned', 'actions': ['edit'], 'desired_states': states}) as request:
+            with self.assertRaises(SetupError):
+                recheck(client)
+        self.assertEqual(request.call_count, 1)
+
     def test_schema_diagnostics_redact_tokens_and_hide_raw_body(self):
         client = PlanClient('sk_' + 'x' * 32)
         body = {'message': 'description missing; sk_' + 'z' * 32, 'other': 'PRIVATE DATA'}
