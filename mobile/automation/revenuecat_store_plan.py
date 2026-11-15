@@ -19,7 +19,7 @@ def desired_states():
         plan_id = store_id.split(':')[1]
         duration, amount = ('P1M', 500) if plan_id == 'monthly' else ('P1Y', 5000)
         result.append({'product_id': product, 'store': 'play_store',
-            'common': {'localizations': {'ja-JP': {'name': '司法書士PASS 全機能プラン'}}},
+            'common': {'localizations': {'ja-JP': {'name': '司法書士PASS 全機能プラン', 'description': None}}},
             'store_state': {'base_plans': {plan_id: {
                 'state': 'DRAFT',
                 'auto_renewing_base_plan_type': {'billing_period_duration': duration},
