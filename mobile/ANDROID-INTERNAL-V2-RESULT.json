@@ -45,8 +45,11 @@
   "pricingRegions": [
     "JP"
   ],
-  "basePlansActivated": false,
+  "basePlansActivated": true,
   "purchaseTestsCompleted": false,
   "priceReadbackRun": 43719122801,
-  "priceReadbackJob": 132827052573
+  "priceReadbackJob": 132827052573,
+  "monthlyAnnualActivePricesVerified": true,
+  "activationReadbackRun": 43768894075,
+  "activationReadbackJob": 132980111464
 }
