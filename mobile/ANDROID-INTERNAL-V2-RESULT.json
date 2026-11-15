@@ -14,8 +14,8 @@
   "assetFilesVerified": 45,
   "privateSecretsIncluded": false,
   "purchasesTested": false,
-  "uploadedToGooglePlay": false,
-  "released": false,
+  "uploadedToGooglePlay": true,
+  "released": true,
   "driveFileId": "1kzRi26ejY7tr9Pg-_H_K11Lp5HXhnGij",
   "driveUrl": "https://drive.google.com/file/d/1kzRi26ejY7tr9Pg-_H_K11Lp5HXhnGij/view?usp=drivesdk",
   "driveSizeVerified": true,
@@ -28,8 +28,15 @@
   "playDraftUpdateJob": 132729050167,
   "playDraftUpdateCommitVerified": false,
   "playDraftUpdateError": "HTTP 400 INVALID_ARGUMENT at edits:commit; temporary edit cleanup attempted; no fallback commit or rollout",
-  "playManualUploadPending": true,
+  "playManualUploadPending": false,
   "internalTesterEmail": "life.s.20220721@gmail.com",
   "internalTesterListSavedObserved": true,
-  "internalTesterCount": 1
+  "internalTesterCount": 1,
+  "playManualDraftSaveReported": true,
+  "internalRolloutExplicitlyAuthorized": true,
+  "internalRolloutAuthorization": "User answered はい to distributing version 2 to the one registered tester",
+  "internalRolloutUiVerified": true,
+  "internalRolloutEvidence": "Latest user screenshot: internal track 有効; latest release 司法書士PASS 内部テスト v2; temporary name com.shihoshoshipass.app (unreviewed)",
+  "releaseScope": "Internal testing, one registered owner/tester",
+  "productionReleased": false
 }
