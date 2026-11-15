@@ -2,13 +2,23 @@
 
 ## 現在の結果
 
+2026-11-15料金計画：run43667833635/job132671077018でplan c1921d0b-e870-4467-ab16-c9ea228582e7の事前確認が完了。日本JP/JPYのみ、monthly P1M=500円・annual P1Y=5000円、両方DRAFTの差分。海外価格は指定しない。ただし両商品に「Google Play credentials cannot create or update products. Grant this service account Manage store presence」のblockerがあり、applyは実行していない。初回のother_regions_config指定によるUSD/EUR必須エラーは、海外設定を省略して同じ計画を修正した。追加済みのbillingアカウントと反映状態の確認が必要。購入・復元テスト、商品有効化、審査・配信は未実施。requestはcheck/prepare_store_plan:falseへ戻す。
+
+計画の確認：https://app.revenuecat.com/projects/proj9ba19f6b/product-catalog/product-editor/review-changes?plan_id=c1921d0b-e870-4467-ab16-c9ea228582e7
+
+購入確認の接続：所有者が画面1000001475でauthorize_revenuecat_setup.py（commit20bf9bb17c64c26a676907c3249e602c5d5f267e、SHA256 953b282ae7e4176386a44cf2801bbe978a42e63090df5f4d17c38a8624f463b5）を実行した。新しいrevenuecat-billingアカウントだけに対する60分のKeyAdmin権限でCIを実行し、run43613553879/job132503655918でGoogle JSON鍵をメモリ上に生成、固定RevenueCatアプリへの転送・アプリIDの読み戻しに成功した。秘密鍵はファイル・GitHub secret・チャット・リポジトリへ保存していない。RevenueCatに保存したGoogle鍵は有効なまま維持する。
+
+2026-11-15追記：画面1489で招待後のユーザー数3人を確認。画面1485～1488ではアプリ閲覧、売上閲覧、注文・定期購入管理、ストア表示管理と、灰色の依存権限2つを確認。管理者・リリース権限は選択していない。run43667130956/job132668895485でRevenueCat経由の実ストア状態取得に成功。日本語の商品名を読み戻し、monthly/annual両方のbase_plansと価格が空であることを確認。購入・注文APIの実動作や購入テストはまだ未確認。料金の下書き作成を準備中。
+
+以前のCloud ShellへのRevenueCat秘密キー貼り付けはHTTP401で設定前に止まったため、現在はその手順を使用しない。既存GitHub secretの接続はrun43613181251で再確認済み。CIのrequest modeは登録成功後catalog-checkへ戻す。登録済みGoogle鍵がある場合、credential処理は再生成やローテーションを拒否するため、billing-credentialsを不用意に再実行しない。
+
 利用者がGitHub secretを正しいV2秘密キーへ更新し、run43608611643/job132490930787で自動接続に成功した。その後run43609852338/job132492270199で、既存プロジェクトproj9ba19f6bへGoogle Playアプリapp1d9873660b（com.shihoshoshipass.app）、商品shihoshoshi_premium:monthly / shihoshoshi_premium:annual、offering shihoshoshi_subscription（ofrng13e1ae7a71）、$rc_monthly / $rc_annual packageを追加し、既存entitlement shihoshoshi_premiumへ紐付けた。すべて読み戻しに成功。既存Test Storeとdefault offeringは維持した。
 
 Google Playアプリのproduction公開SDKキー（goog_）だけをapps.jsonへ反映し、ローカルWebビルドと課金判定の既存検証が成功した。秘密のsk_キーはGitHub Actions secretにあり、取得・出力・アプリへの組み込みは行っていない。既存の署名済み準備用AABは更新していない。
 
-未完了：Google Play側の500円／5000円の基本プラン保存は、正しいアプリ権限をUIで確認後もHTTP403。RevenueCatへ購入確認用Googleサービスアカウント資格情報を渡していない。購入・復元・解約・期限切れテスト、正式AAB、審査送信・配信は未実施。
+未完了：Google Play側の500円／5000円の基本プラン保存は、正しいアプリ権限をUIで確認後もHTTP403。RevenueCatへのGoogle資格情報転送は完了しているが、実購入確認は未検証。購入・復元・解約・期限切れテスト、正式AAB、審査送信・配信は未実施。
 
-## Google Cloud所有者による次の処理
+## 旧手順の記録（以下は現在使用しない）
 
 setup_revenuecat_google.pyは所有者のCloud Shellで実行するための準備済みhelperで、まだ実行していない。正しい所有者、プロジェクト番号、RevenueCatアプリID・packageを確認し、revenuecat-billing@shihoshoshi-pass-ci.iam.gserviceaccount.comを作成する。公式手順に沿ってAndroid Publisher/Reporting、IAM、Pub/Sub APIを有効化し、この購入確認用アカウントだけにPub/Sub Editor・Monitoring Viewerを付ける。既存のplay-draft-uploaderの権限や鍵は変更しない。
 
