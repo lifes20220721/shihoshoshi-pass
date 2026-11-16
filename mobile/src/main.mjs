@@ -1,4 +1,4 @@
-import {Capacitor} from '@capacitor/core';
+import {Capacitor, registerPlugin} from '@capacitor/core';
 import {App} from '@capacitor/app';
 import {Browser} from '@capacitor/browser';
 import {Filesystem, Directory, Encoding} from '@capacitor/filesystem';
@@ -7,6 +7,7 @@ import {LocalNotifications} from '@capacitor/local-notifications';
 import {Purchases} from '@revenuecat/purchases-capacitor';
 import {Billing} from './billing.mjs';
 import {ReviewerAccess,canStudy} from './reviewer-access.mjs';
+import {ReferralAccess} from './referral-trial.mjs';
 import {exportBackup, validateBackup, restoreBackup, allowedKey} from './backup.mjs';
 import config from 'app-config';
 import sample from 'sample-data';
@@ -22,7 +23,9 @@ demo.positions ||= {}; demo.answers ||= {};
 let route = 'home', currentSubject = null, currentIndex = 0, answered = false, toastTimer;
 const billing = new Billing({sdk: Purchases, platform: Capacitor.getPlatform(), config, onChange: billingChanged});
 const reviewer = new ReviewerAccess({config:config.reviewAccess,onChange:billingChanged});
-const fullAccess = () => canStudy(billing,reviewer);
+const referral = new ReferralAccess({app:config.id,plugin:registerPlugin('PassInstallReferrer'),onChange:billingChanged});
+const referralEnabled = native && Capacitor.getPlatform()==='android' && config.referralTrialEnabled===true;
+const fullAccess = () => canStudy(billing,reviewer) || (referralEnabled && referral.active);
 function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 6500); }
 function action(id, callback) { const element=$(id); if(element) element.onclick=()=>Promise.resolve().then(callback).catch(e=>toast(e.message||'操作を完了できませんでした。')); }
 function saveDemo() { try { localStorage.setItem(demoKey,JSON.stringify(demo)); } catch { toast('学習記録を保存できませんでした。端末の空き容量を確認してください。'); } }
@@ -36,6 +39,20 @@ function billingChanged() {
 }
 function home() {
   page('home',`<section class="card hero"><div class="eyebrow">毎日の積み重ねが、合格への一歩</div><h2>今日も、一問から。</h2><p>${esc(config.name)}を無料で体験できます。各科目の○×問題を繰り返し学習でき、途中位置を自動で保存します。</p><div class="actions"><button class="primary" id="demo">無料の問題を学ぶ</button><button id="full">${fullAccess()?'全機能で学習を再開':'全機能・購読プランを見る'}</button></div>${billing.active?'<p><span class="badge">購読中</span></p>':''}</section><section class="card"><h3>アプリで続ける学習</h3><p class="muted">教材を端末に収録。通信がない場所でも学習できます。条文の原文など外部資料には通信が必要です。</p><div class="grid"><button id="settings">学習通知・バックアップ</button><button id="purchases">購読・購入の復元</button></div></section>${footer()}`);
+  if (Capacitor.getPlatform()==='android') {
+    const related = config.id === 'shihoshoshi' ? {name:'行政書士PASS',id:'com.gyoseishoshipass.app'} : {name:'司法書士PASS',id:'com.shihoshoshipass.app'};
+    $('main').querySelector('footer').insertAdjacentHTML('beforebegin', `<section class="card"><h3>もう一つの資格アプリ</h3><p>${esc(related.name)}をGoogle Playで確認できます。</p><button id="relatedApp">${esc(related.name)}をGoogle Playで見る</button></section>`);
+    const referrer = new URLSearchParams({utm_source:config.id+'_pass',utm_medium:'app'});
+    const storeUrl = new URL('https://play.google.com/store/apps/details');
+    storeUrl.searchParams.set('id',related.id);
+    storeUrl.searchParams.set('referrer',referrer.toString());
+    action('relatedApp',()=>openExternal(storeUrl.href));
+  }
+  const referralStatus = referralEnabled ? referral.status : null;
+  if (referralStatus?.active) {
+    const expiry = new Date(referralStatus.expiresAt).toLocaleString('ja-JP');
+    $('main').querySelector('footer').insertAdjacentHTML('beforebegin', `<section class="card"><h3>紹介特典の無料期間</h3><p>${esc(expiry)}まで全機能をご利用いただけます。支払い登録は不要で、自動課金もありません。</p></section>`);
+  }
   action('demo',subjects);action('full',()=>fullAccess()?openStudy():plans());action('settings',settings);action('purchases',plans);legalActions();
 }
 function subjects() {
@@ -112,7 +129,8 @@ function legal(kind) {
 $('backupFile').onchange=async()=>{try{const file=$('backupFile').files[0];if(!file)return;const values=validateBackup(await file.text(),config);if(!confirm('バックアップに含まれる学習記録で上書きしますか？'))return;closeStudy(true);restoreBackup(localStorage,values);demo=JSON.parse(localStorage.getItem(demoKey)||'{"positions":{},"answers":{}}');demo.positions||={};demo.answers||={};toast('学習記録を復元しました。');}catch(e){toast(e.message||'バックアップを読み込めませんでした。')}finally{$('backupFile').value='';}};
 window.addEventListener('message',event=>{const frame=$('studyFrame').firstChild;if(event.source!==frame?.contentWindow||event.origin!==location.origin||event.data?.type!=='pass-external-link')return;openExternal(event.data.href).catch(e=>toast(e.message));});
 $('appName').textContent=config.name;document.title=config.name;$('homeButton').onclick=home;$('closeStudy').onclick=()=>{closeStudy();home()};
-if(native){App.addListener('appStateChange',state=>{if(state.isActive){billing.refresh();reviewer.refresh()}});App.addListener('backButton',()=>{if(!$('studyArea').hidden){closeStudy();home()}else if(route!=='home')home()});}
-setInterval(()=>{if(!$('studyArea').hidden&&!fullAccess())billingChanged()},1000);
+if(native){App.addListener('appStateChange',state=>{if(state.isActive){billing.refresh();reviewer.refresh();if(referralEnabled)referral.refresh()}});App.addListener('backButton',()=>{if(!$('studyArea').hidden){closeStudy();home()}else if(route!=='home')home()});}
+let previousReferralActive=false;
+setInterval(()=>{const active=referralEnabled&&referral.active;if(active!==previousReferralActive){previousReferralActive=active;billingChanged()}else if(!$('studyArea').hidden&&!fullAccess())billingChanged()},1000);
 setInterval(()=>reviewer.refresh(),60000);
-home();billing.init();
+home();billing.init();if(referralEnabled)referral.refresh();

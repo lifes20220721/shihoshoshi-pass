@@ -53,6 +53,8 @@ for(const[id,app]of Object.entries(apps)) {
   if(!fs.existsSync(source))throw Error('Run node scripts/fetch-sources.mjs first');
   if(fs.readFileSync(path.join(source,'.source-commit'),'utf8').trim()!==app.sourceCommit)throw Error('Source commit does not match apps.json');
   const config={...app,id,revenueCat:{...app.revenueCat,...local[id]?.revenueCat}};
+  // Remains disabled until both Play installs and trial abuse/replay behavior are verified.
+  config.referralTrialEnabled=local[id]?.referralTrialEnabled===true;
   if(id==='shihoshoshi'&&local[id]?.reviewAccess) {
     const r=local[id].reviewAccess;
     config.reviewAccess={enabled:r.enabled===true,endpoint:r.endpoint,issuer:r.issuer,audience:r.audience,keyId:r.keyId,publicKey:r.publicKey};

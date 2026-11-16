@@ -16,8 +16,32 @@ execFileSync(process.execPath,[cli,fs.existsSync(path.join(dir,platform))?'sync'
 if(platform==='android') {
   const manifest=path.join(dir,'android/app/src/main/AndroidManifest.xml');
   fs.writeFileSync(manifest,fs.readFileSync(manifest,'utf8').replace('android:launchMode="singleTask"','android:launchMode="singleTop"'));
+  let manifestSource=fs.readFileSync(manifest,'utf8');
+  if(!manifestSource.includes('<package android:name="com.android.vending"')) {
+    if(manifestSource.includes('<queries>'))manifestSource=manifestSource.replace('<queries>','<queries><package android:name="com.android.vending" />');
+    else manifestSource=manifestSource.replace('<application','<queries><package android:name="com.android.vending" /></queries>\n    <application');
+    fs.writeFileSync(manifest,manifestSource);
+  }
   const drawable=path.join(dir,'android/app/src/main/res/drawable');fs.mkdirSync(drawable,{recursive:true});
   fs.writeFileSync(path.join(drawable,'ic_stat_book.xml'),'<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M4,3h7v17H4zM13,3h7v17h-7z"/></vector>');
+  const javaRoot=path.join(dir,'android/app/src/main/java');
+  const pluginDir=path.join(javaRoot,'com/pass/shared');fs.mkdirSync(pluginDir,{recursive:true});
+  fs.copyFileSync(path.join(root,'android-templates/ReferralPlugin.java'),path.join(pluginDir,'ReferralPlugin.java'));
+  const activity=path.join(javaRoot,...app.bundleId.split('.'),'MainActivity.java');
+  let activitySource=fs.readFileSync(activity,'utf8');
+  if(!activitySource.includes('registerPlugin(com.pass.shared.ReferralPlugin.class)')) {
+    const original='public class MainActivity extends BridgeActivity {}';
+    if(!activitySource.includes(original))throw Error('Unexpected MainActivity; register referral plugin manually');
+    activitySource=activitySource.replace(original,'public class MainActivity extends BridgeActivity {\n    @Override public void onCreate(android.os.Bundle state) {\n        registerPlugin(com.pass.shared.ReferralPlugin.class);\n        super.onCreate(state);\n    }\n}');
+    fs.writeFileSync(activity,activitySource);
+  }
+  const gradle=path.join(dir,'android/app/build.gradle');let gradleSource=fs.readFileSync(gradle,'utf8');
+  const dependency="implementation 'com.android.installreferrer:installreferrer:2.2'";
+  if(!gradleSource.includes(dependency)) {
+    if(!gradleSource.includes('dependencies {'))throw Error('Unexpected Android dependencies layout');
+    gradleSource=gradleSource.replace('dependencies {','dependencies {\n    '+dependency);
+    fs.writeFileSync(gradle,gradleSource);
+  }
 }
 const icon=path.join(root,'sources',id,'icons',id==='shihoshoshi'?'icon-512.png':'app-icon.svg');
 if(platform==='android') {
