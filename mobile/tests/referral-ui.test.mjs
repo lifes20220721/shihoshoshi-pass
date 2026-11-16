@@ -31,7 +31,7 @@ for (const app of ['shihoshoshi','gyoseishoshi']) test(app+': referral access op
   let now=installedAt;
   class Clock extends Date {static now(){return now}}
   const storage=new Map([['learning','keep']]);
-  const sandbox={Date:Clock,URL,URLSearchParams,console,opened:[],playResult:{referrer:`utm_source=${source}&utm_medium=app`,installedAt},document:{getElementById:id=>ids[id],createElement:()=>new Element('iframe'),querySelectorAll:()=>[]},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setInterval:(fn,ms)=>timers.push({fn,ms}),setTimeout:()=>0,clearTimeout(){},location:{origin:'https://localhost'}};
+  const sandbox={Date:Clock,performance:{now:()=>now},URL,URLSearchParams,console,opened:[],playResult:{referrer:`utm_source=${source}&utm_medium=app`,installedAt,trustedNow:installedAt},document:{getElementById:id=>ids[id],createElement:()=>new Element('iframe'),querySelectorAll:()=>[]},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setInterval:(fn,ms)=>timers.push({fn,ms}),setTimeout:()=>0,clearTimeout(){},location:{origin:'https://localhost'}};
   sandbox.window=sandbox;sandbox.addEventListener=()=>{};sandbox.scrollTo=()=>{};
   vm.runInNewContext(result.outputFiles[0].text,sandbox);
   await new Promise(resolve=>setImmediate(resolve));

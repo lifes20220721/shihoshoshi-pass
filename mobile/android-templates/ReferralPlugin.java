@@ -12,6 +12,9 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
+import java.util.UUID;
 
 @CapacitorPlugin(name = "PassInstallReferrer")
 public class ReferralPlugin extends Plugin {
@@ -45,7 +48,29 @@ public class ReferralPlugin extends Plugin {
                     JSObject data = new JSObject();
                     data.put("referrer", details.getInstallReferrer());
                     data.put("installedAt", seconds * 1000);
-                    call.resolve(data);
+                    // Obtain wall time through TLS, then the web layer advances it
+                    // with a monotonic clock. Device date changes do not extend a trial.
+                    new Thread(() -> {
+                        HttpsURLConnection connection = null;
+                        try {
+                            URL url = new URL("https://xs968799.xsrv.jp/pass-review/healthz?clock=" + UUID.randomUUID());
+                            connection = (HttpsURLConnection) url.openConnection();
+                            connection.setInstanceFollowRedirects(false);
+                            connection.setRequestMethod("HEAD");
+                            connection.setConnectTimeout(5000);
+                            connection.setReadTimeout(5000);
+                            connection.setUseCaches(false);
+                            connection.setRequestProperty("Cache-Control", "no-cache, no-store");
+                            if (connection.getResponseCode() != 200 || connection.getDate() <= 0) {
+                                call.reject("Trusted trial time unavailable");
+                                return;
+                            }
+                            data.put("trustedNow", connection.getDate());
+                            call.resolve(data);
+                        } catch (Exception error) {
+                            call.reject("Could not verify trial time", error);
+                        } finally { if (connection != null) connection.disconnect(); }
+                    }, "pass-trial-clock").start();
                 } catch (RemoteException | RuntimeException error) {
                     call.reject("Could not read Google Play install referrer", error);
                 } finally { client.endConnection(); }

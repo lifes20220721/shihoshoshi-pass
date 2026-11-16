@@ -21,24 +21,28 @@ export function referralTrial({app, referrer, installedAt, now}) {
 }
 
 export class ReferralAccess {
-  constructor({app, plugin, now = () => Date.now(), onChange = () => {}}) {
+  constructor({app, plugin, now = () => performance.now(), onChange = () => {}}) {
     Object.assign(this, {app,plugin,now,onChange});
     this.details = null;
     this.lastSeen = 0;
+    this.clock = null;
   }
   get status() {
-    const now = this.now();
+    const tick = this.now();
     // A clock moving backwards during this session must not extend access.
-    if (!Number.isSafeInteger(now) || now < this.lastSeen) return null;
-    this.lastSeen = now;
+    if (!this.clock || !Number.isFinite(tick) || tick < this.lastSeen || tick < this.clock.anchor) return null;
+    this.lastSeen = tick;
+    const now = Math.floor(this.clock.serverNow + tick - this.clock.anchor);
     return this.details && referralTrial({app:this.app,...this.details,now});
   }
   get active() { return Boolean(this.status?.active); }
   async refresh() {
     try {
       const details = await this.plugin.read();
+      if (!Number.isSafeInteger(details.trustedNow) || details.trustedNow <= 0) throw Error('Trusted clock unavailable');
+      this.clock = {serverNow:details.trustedNow,anchor:this.now()};
       this.details = {referrer:details.referrer,installedAt:details.installedAt};
-    } catch { this.details = null; }
+    } catch { this.details = null; this.clock = null; }
     this.onChange();
   }
 }
