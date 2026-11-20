@@ -1,5 +1,19 @@
 # PASS ストアアプリ準備版
 
+2026-11-20：司法書士PASSの次回ビルド用の接続先をxs366651へ変更。[サーバー移行の現在の状態](XSERVER-MIGRATION.md)を優先してください。新ホストのSSL・データ移行・実通信とアプリ配信は未完了。以下の旧設置記録にあるclient-public.deployed.jsonをそのまま戻さず、次回ビルドではreview-access.public.jsonを使用します。
+
+## 審査用認証の実装とXServerへの設置
+
+司法書士PASS向けに、サーバーで認証した専用アカウントへ短時間の署名付き学習権限を発行する仕組みを追加しました。固定解除パスワードや購入状態の上書きは使いません。2026-11-13にXServerへの設置と実通信の認証確認を完了。手元のアプリ設定へ公開鍵とURLを反映しました。Android実機の確認は未実施です。通常の課金設定と学習データは維持しています。
+
+実装・検証の詳細は [REVIEW-ACCESS.md](REVIEW-ACCESS.md)、Play Console向けの英語手順は [PLAY-REVIEW-INSTRUCTIONS.en.md](PLAY-REVIEW-INSTRUCTIONS.en.md)。Androidアプリのアップロード・審査送信・公開・リリースは行っていません。
+
+PHP版を既存のXServerへ設置しました。構成・確認結果・残作業は [DEPLOYMENT-XSERVER.md](DEPLOYMENT-XSERVER.md)。Render案は予備として [DEPLOYMENT-RENDER.md](DEPLOYMENT-RENDER.md) に残し、契約・配備は行っていません。
+
+利用者が接続ファイルを1回アップロードした後、署名付きHTTPS要求による初回設置・実ログイン・接続ファイル削除を自動実行しました。詳細は [AUTOMATION-XSERVER.md](AUTOMATION-XSERVER.md)。APIキー・SSH鍵の登録は不要でした。設置済み公開鍵は `xserver-php/client-public.deployed.json`。ソースZIPから再構築する場合は、この内容をローカル設定の `shihoshoshi.reviewAccess` へ追記し、既存の課金設定を保持します。
+
+通常版と別にインストールできる確認用APKも作成し、署名・アプリID・教材一致・秘密情報の非同梱を検証しました。実機での確認方法は [ANDROID-REVIEW-TEST.md](ANDROID-REVIEW-TEST.md)。Android端末の操作確認と実決済は未実施です。
+
 司法書士PASS・行政書士PASSを、無料体験＋月額／年額の購読で利用するAndroid・iOSアプリのソースです。既存のWebサイトを変更せず、教材をアプリ内へ収録します。
 
 ## 現在できていること
@@ -13,7 +27,7 @@
 
 ## 未完了のこと
 
-**ストアへの申請・販売はまだ行っていません。** Apple Developer／Google Play Consoleアカウントが未登録のため、商品・価格・署名・RevenueCat連携を設定できません。実ストアのSandbox決済、端末での通知・共有、署名付きAAB／IPAの検証もこれからです。iOSネイティブコンパイルにはMacとXcodeが必要です。アプリ審査の承認は各ストアが判断します。
+**ストアへの申請・販売はまだ行っていません。** 商品・価格・本番署名・RevenueCat連携の設定と、実ストアのSandbox決済、端末での通知・共有、提出用AAB／IPAの検証が必要です。確認用APKのビルド・署名検証は完了しています。iOSネイティブコンパイルにはMacとXcodeが必要です。アプリ審査の承認は各ストアが判断します。
 
 ## 開発
 
@@ -48,7 +62,7 @@ Android Studioで `native/{資格名}/android`、Xcodeで `native/{資格名}/io
 
 Webブラウザの学習履歴はアプリへ自動転送されません。有料の学習画面内にある従来のバックアップ機能からWeb版のバックアップを取り込めます。新しいアプリ専用バックアップは、アプリ内の無料体験・従来の学習データをまとめて保存します。購読状態はバックアップに含めず、ストアから復元します。
 
-現在はアプリ内ログインを設けていません。購入の復元は同じOSの同じストアアカウントで行います。iOS／Android間・司法書士／行政書士アプリ間の購読共有は提供しません。
+通常ユーザー用のアプリ内ログインは設けていません。設定により司法書士PASS Androidの審査担当者専用ログインを有効化できます。購入の復元は同じOSの同じストアアカウントで行います。iOS／Android間・司法書士／行政書士アプリ間の購読共有は提供しません。
 
 ## 検証記録
 

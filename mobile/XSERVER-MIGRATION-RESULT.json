@@ -1,0 +1,22 @@
+{
+  "sourceServer": "xs968799",
+  "targetServer": "xs366651",
+  "targetEndpoint": "https://xs366651.xsrv.jp/pass-review",
+  "sourceChanged": true,
+  "sslVerified": false,
+  "serverDataMigrated": false,
+  "reviewerLoginVerified": false,
+  "signedNewTargetBuildCreated": false,
+  "installedAppsUpdated": false,
+  "publicKeyPreserved": true,
+  "oldServerModified": false,
+  "nodeTestsPassed": true,
+  "webBuildPassed": true,
+  "newEndpointPresentInBuiltJs": true,
+  "oldEndpointAbsentFromBuiltJs": true,
+  "githubUpdated": true,
+  "githubSaveStatus": "Source migration changes published on the preparation branch; server deployment and app distribution remain pending.",
+  "sourceArchive": "/workspace/shihoshoshi-xs366651-source-changes.zip",
+  "sourceArchiveSha256": "0cf6cb6aa156a6eb84679e4193bd655044d6df5968803f74ca4b87c54bbf0cf5",
+  "githubBranch": "codex/store-apps-preparation"
+}
