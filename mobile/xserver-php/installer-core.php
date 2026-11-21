@@ -25,7 +25,7 @@ final class Installer {
         $root = realpath($publicDirectory);
         if ($root === false || basename($root) !== 'public_html') throw new RuntimeException('Upload to public_html');
         if (!preg_match('/^[a-f0-9]{32}$/D', $spec['id'] ?? '') ||
-            ($spec['issuer'] ?? '') !== 'https://xs366651.xsrv.jp/pass-review' ||
+            ($spec['issuer'] ?? '') !== 'https://xs968799.xsrv.jp/pass-review' ||
             !is_int($spec['expiresAt'] ?? null) ||
             !preg_match('/^[a-f0-9]{64}$/D', $spec['signingPublicKey'] ?? '') ||
             !preg_match('/^[a-f0-9]{64}$/D', $spec['encryptionPublicKey'] ?? '') ||
@@ -122,7 +122,7 @@ final class Installer {
         $this->save($stage . '/private/client-public.json', $client);
         require $stage . '/private/service.php';
         $service = new \PassReview\Service($stage . '/private');
-        $health = $service->handle(['https'=>true, 'host'=>'xs366651.xsrv.jp', 'method'=>'GET', 'path'=>'/pass-review/healthz']);
+        $health = $service->handle(['https'=>true, 'host'=>'xs968799.xsrv.jp', 'method'=>'GET', 'path'=>'/pass-review/healthz']);
         if ($health['status'] !== 200) throw new RuntimeException('Staged service check failed');
         unset($service);
 
@@ -150,7 +150,7 @@ final class Installer {
     public function handle(array $request): array {
         $reply = static fn(int $status, array $body): array => ['status'=>$status,'body'=>$body];
         if (($request['https'] ?? false) !== true) return $reply(426, ['error'=>'HTTPS required']);
-        if (!in_array(strtolower($request['host'] ?? ''), ['xs366651.xsrv.jp','xs366651.xsrv.jp:443'], true)) return $reply(400, ['error'=>'Invalid host']);
+        if (!in_array(strtolower($request['host'] ?? ''), ['xs968799.xsrv.jp','xs968799.xsrv.jp:443'], true)) return $reply(400, ['error'=>'Invalid host']);
         if (($request['path'] ?? '') !== '/' . $this->filename) return $reply(404, ['error'=>'Not found']);
         $now = time();
         if ($this->spec['expiresAt'] <= $now) return $reply(410, ['error'=>'Setup expired']);

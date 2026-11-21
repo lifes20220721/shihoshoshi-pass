@@ -8,11 +8,11 @@ test('XServer API probe uses fixed read-only destinations and strips sensitive m
   const result=await checkXServerApi({key,request:async(url,credential)=>{
     calls.push(url);assert.equal(credential,key);assert(!url.includes(key));
     if(url.endsWith('/me'))return {status:200,body:{token:key,permissions:['write']}};
-    if(url.endsWith('/server-info'))return {status:200,body:{server_id:'xs366651',domain_validation_token:'private'}};
+    if(url.endsWith('/server-info'))return {status:200,body:{server_id:'xs968799',domain_validation_token:'private'}};
     return {status:200,body:{crons:[{id:'existing',command:'private command'}]}};
   }});
-  assert.deepEqual(calls,['https://api.xserver.ne.jp/v1/me','https://api.xserver.ne.jp/v1/server/xs366651/server-info','https://api.xserver.ne.jp/v1/server/xs366651/cron']);
-  assert.deepEqual(result,{authenticated:true,serverId:'xs366651',readOnlyCheck:true,existingCronJobs:1});
+  assert.deepEqual(calls,['https://api.xserver.ne.jp/v1/me','https://api.xserver.ne.jp/v1/server/xs968799/server-info','https://api.xserver.ne.jp/v1/server/xs968799/cron']);
+  assert.deepEqual(result,{authenticated:true,serverId:'xs968799',readOnlyCheck:true,existingCronJobs:1});
   assert(!JSON.stringify(result).includes(key));assert(!JSON.stringify(result).includes('private'));
 });
 
@@ -33,7 +33,7 @@ test('XServer API probe stops on a mismatched server and refuses malformed job l
     let count=0;
     await assert.rejects(()=>checkXServerApi({key,request:async()=>{
       count++;
-      return {status:200,body:count===1?{}:count===2?{server_id:wrongServer?'other':'xs366651'}:{crons:null}};
+      return {status:200,body:count===1?{}:count===2?{server_id:wrongServer?'other':'xs968799'}:{crons:null}};
     }}));
     assert.equal(count,wrongServer?2:3);
   }

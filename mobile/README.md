@@ -1,6 +1,6 @@
 # PASS ストアアプリ準備版
 
-2026-11-20：司法書士PASSの次回ビルド用の接続先をxs366651へ変更。[サーバー移行の現在の状態](XSERVER-MIGRATION.md)を優先してください。新ホストのSSL・データ移行・実通信とアプリ配信は未完了。以下の旧設置記録にあるclient-public.deployed.jsonをそのまま戻さず、次回ビルドではreview-access.public.jsonを使用します。
+2026-11-21：方針変更に合わせ、次回ビルドの審査API・issuer・Android紹介特典の時刻取得先を旧サーバーxs968799へ戻しました。既存の公開鍵・課金設定・アプリIDを維持しています。[現在の状態](XSERVER-MIGRATION.md)を参照してください。新サーバーへの移行は停止中です。実サーバーの初期化やデータ移動は行わず、次回ビルドではreview-access.public.jsonを使用します。
 
 ## 審査用認証の実装とXServerへの設置
 

@@ -1,17 +1,28 @@
-# xs968799からxs366651への接続先変更
+# 旧サーバーxs968799への接続先差し戻し
 
-利用者の明示指示により、司法書士PASSの次回ビルドの接続先を `https://xs366651.xsrv.jp/pass-review` へ変更した。endpoint、署名検証のissuer、時刻確認用Androidプラグイン、設置・接続確認・ビルド検証スクリプトの対象を更新した。
+2026年11月21日（日本時間）の指示により、新サーバーxs366651への移行を停止し、審査APIを `https://xs968799.xsrv.jp/pass-review` へ戻しました。
 
-課金設定と公開鍵は維持した。旧サーバーと配信済みAABは変更していない。サーバー移行、新しい署名済みアプリの作成・配信は未完了。
+## 差し戻した対象
 
-## 必要な情報と作業
+- `review-access.public.json` のendpointとissuer。公開鍵・key ID・audience・reviewAccessVerifiedの値は維持しました。
+- 両アプリに共通のAndroid紹介特典プラグインの時刻取得先。
+- 初回設置用パッケージ生成・接続検査・API検査・APK/AAB内の接続先検証スクリプトとPHP側の許可ホスト。
+- 対応するテスト。旧サーバーissuerの署名を許可し、停止した新サーバーissuerの署名を拒否する回帰検査を含みます。
 
-1. 新初期ドメイン `xs366651.xsrv.jp` のSSL有効化・反映完了。利用者の画像ではSSLが×だったため、現在のSSL設定画面またはHTTPS疎通確認が必要。
-2. 旧サーバーの `xs968799.xsrv.jp/public_html/pass-review/` と `xs968799.xsrv.jp/pass-review-private/` を取得し、新サーバーへ配置できる接続手段。
-3. private側の署名鍵、アカウント、設定、PHPサービスとSQLite状態の整合したバックアップ。秘密情報をチャットや公開フォルダに置かない。
+課金設定、アプリID、公開URL、学習履歴の保存キー、既存の公開鍵は変更していません。
 
-新配置先は `xs366651.xsrv.jp/public_html/pass-review/` と、その公開領域の外の `xs366651.xsrv.jp/pass-review-private/`。署名鍵と審査アカウントのハッシュを保持し、server.jsonのissuerとclient-public.jsonのendpoint/issuerを新URLへ更新する。SQLiteは動作中の単純コピーを避ける。初回設置スクリプトによる新鍵・新アカウントの作成を、既存データの移行の代わりに実行しない。
+## 実施した検証
 
-HTTPS証明書、healthz、既存アカウントのログイン・grant・logout、秘密ファイルの非公開を確認してから実機確認する。紹介特典の時刻取得も新ホストで確認する。
+Nodeの32テスト、両アプリのWebビルド、ビルド済みUIの認証・失効・ログアウト・履歴維持、Chromiumでの両アプリの画面検査を通過しました。ビルド済み司法書士PASSのJSが旧審査APIを含み、新サーバーのホスト名を含まないことも確認しました。
 
-`review-access.public.json` は次回ビルド用。`xserver-php/client-public.deployed.json` と `XSERVER-LIVE-RESULT.json` は旧サーバーでの実測記録であり、書き換えて移行済み扱いにしない。旧サーバー向けの既存AABを新対応版として再配布しない。
+GitHubの `Build mobile preview` は、公開情報だけの審査設定を読み込み、ローカルPHP fixtureの統合試験と両アプリのAndroidデバッグAPKビルドを実行します。結果は当該PRの最新CIを参照します。署名済み製品版AABの作成・Playへの配信は行いません。
+
+実サーバーではGETのhealthzがHTTPS 200 / ok=trueであることだけを再確認しました。実アカウントのログイン、SQLite書き込み、インストーラー実行は行っていません。既存の鍵・アカウント・DBを初期化しません。
+
+## 旧FTP検査
+
+行政書士PASSリポジトリの `Inspect old XServer xs968799 read-only` ワークフローから、旧サーバー専用Secret `XSERVER_XS968799_FTP_PASSWORD` だけを使用します。新サーバー用 `XSERVER_FTP_PASSWORD` は参照しません。
+
+未登録時は認証を試みず停止します。登録後は両サイトの公開フォルダと既存審査API・非公開領域のフォルダ存在を調べます。秘密ファイルの内容は取得せず、FTPの書き込み・削除・DNS変更は行いません。
+
+この差し戻しは下書きPRで保持し、マージや本番公開、サーバーの解約・設定削除は行いません。旧サーバーの過去の実測記録やAABを、今回の再ビルド結果に書き換えて扱うことはしません。
