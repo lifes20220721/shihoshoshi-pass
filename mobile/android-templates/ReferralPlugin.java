@@ -53,7 +53,7 @@ public class ReferralPlugin extends Plugin {
                     new Thread(() -> {
                         HttpsURLConnection connection = null;
                         try {
-                            URL url = new URL("https://xs366651.xsrv.jp/pass-review/healthz?clock=" + UUID.randomUUID());
+                            URL url = new URL("https://xs968799.xsrv.jp/pass-review/healthz?clock=" + UUID.randomUUID());
                             connection = (HttpsURLConnection) url.openConnection();
                             connection.setInstanceFollowRedirects(false);
                             connection.setRequestMethod("HEAD");

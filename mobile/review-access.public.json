@@ -3,8 +3,8 @@
     "reviewAccessVerified": false,
     "reviewAccess": {
       "enabled": true,
-      "endpoint": "https://xs366651.xsrv.jp/pass-review",
-      "issuer": "https://xs366651.xsrv.jp/pass-review",
+      "endpoint": "https://xs968799.xsrv.jp/pass-review",
+      "issuer": "https://xs968799.xsrv.jp/pass-review",
       "audience": "com.shihoshoshipass.app",
       "keyId": "92d2b50decac1a0fdc954fb00480fb1f",
       "publicKey": {

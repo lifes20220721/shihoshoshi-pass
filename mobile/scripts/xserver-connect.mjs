@@ -6,7 +6,7 @@ import {generateKeyPairSync,randomBytes,createHash,sign,createPrivateKey,createP
 import {validateReviewConfig,ReviewerAccess} from '../src/reviewer-access.mjs';
 
 const sourceRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const issuer='https://xs366651.xsrv.jp/pass-review';
+const issuer='https://xs968799.xsrv.jp/pass-review';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const bytes=value=>{
   if(typeof value!=='string'||!/^[A-Za-z0-9_-]+$/.test(value))throw Error('Invalid encrypted setup response');
@@ -23,7 +23,7 @@ export function buildConnectPackage({outputDirectory,privateDirectory,expiresAt=
     signingPublicKey:Buffer.from(signing.publicKey.export({format:'jwk'}).x,'base64url').toString('hex'),
     encryptionPublicKey:Buffer.from(encryption.publicKey.export({format:'jwk'}).x,'base64url').toString('hex')};
   const filename='pass-review-connect-'+id+'.php';
-  const state={spec,endpoint:'https://xs366651.xsrv.jp/'+filename,
+  const state={spec,endpoint:'https://xs968799.xsrv.jp/'+filename,
     signingPrivateKey:signing.privateKey.export({type:'pkcs8',format:'pem'}),encryptionPrivateKey:encryption.privateKey.export({format:'jwk'})};
   fs.mkdirSync(privateDirectory,{recursive:true,mode:0o700});fs.chmodSync(privateDirectory,0o700);
   fs.mkdirSync(outputDirectory,{recursive:true});
@@ -94,7 +94,7 @@ export function setupCurlConfig(body,headers={}) {
 }
 
 function request(url,body,headers={}) {
-  if(!/^https:\/\/xs366651\.xsrv\.jp\/(?:pass-review-connect-[a-f0-9]{32}\.php|pass-review\/(?:healthz|login|grant|logout))$/.test(url))throw Error('Unexpected installation destination');
+  if(!/^https:\/\/xs968799\.xsrv\.jp\/(?:pass-review-connect-[a-f0-9]{32}\.php|pass-review\/(?:healthz|login|grant|logout))$/.test(url))throw Error('Unexpected installation destination');
   const config=setupCurlConfig(body,headers);
   return new Promise((resolve,reject)=>{
     const args=['--disable','--silent','--show-error','--proto','=https','--max-time','25','--max-filesize','1048576'];
@@ -143,7 +143,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href) {
     const [action,stateFile]=process.argv.slice(2);
     if(!['check','install'].includes(action)||!stateFile)throw Error('Usage: xserver-connect.mjs check|install PRIVATE-STATE-FILE');
     const state=JSON.parse(fs.readFileSync(stateFile,'utf8'));
-    if(state.endpoint!=='https://xs366651.xsrv.jp/pass-review-connect-'+state.spec.id+'.php')throw Error('Unexpected setup endpoint');
+    if(state.endpoint!=='https://xs968799.xsrv.jp/pass-review-connect-'+state.spec.id+'.php')throw Error('Unexpected setup endpoint');
     if(action==='check'){
       const result=await request(state.endpoint);
       if(result.installerId!==state.spec.id||result.manifestHash!==state.spec.manifestHash)throw Error('Unexpected setup file');

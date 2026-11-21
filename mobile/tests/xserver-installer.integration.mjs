@@ -26,7 +26,7 @@ function fixture(t){
   for(const [name,contents]of Object.entries(originals))fs.writeFileSync(path.join(publicDir,name),contents);
   const built=buildConnectPackage({outputDirectory:publicDir,privateDirectory:privateDir});
   const specFile=path.join(privateDir,'spec.json');fs.writeFileSync(specFile,JSON.stringify(built.spec),{mode:0o600});
-  const raw=(patch={})=>({https:true,host:'xs366651.xsrv.jp',path:new URL(built.state.endpoint).pathname,method:'POST',contentType:'application/json',...patch});
+  const raw=(patch={})=>({https:true,host:'xs968799.xsrv.jp',path:new URL(built.state.endpoint).pathname,method:'POST',contentType:'application/json',...patch});
   const call=async patch=>JSON.parse(await run([bridge,specFile,publicDir],JSON.stringify(raw(patch))));
   const action=(name,options)=>call({body:JSON.stringify(setupRequest(built.state,name,options))});
   const preserved=()=>{for(const [name,contents]of Object.entries(originals))assert.equal(fs.readFileSync(path.join(publicDir,name),'utf8'),contents)};
@@ -89,7 +89,7 @@ test('signed installation creates real reviewer service, encrypts credentials, a
   assert.equal(fs.statSync(f.installedPrivate).mode&0o777,0o700);
   assert.equal(fs.statSync(f.installedPublic).mode&0o777,0o755);f.preserved();
   const request=async(url,options)=>{
-    const result=JSON.parse(await run([serviceBridge,f.installedPrivate],JSON.stringify({https:true,host:'xs366651.xsrv.jp',
+    const result=JSON.parse(await run([serviceBridge,f.installedPrivate],JSON.stringify({https:true,host:'xs968799.xsrv.jp',
       ip:'192.0.2.1',path:new URL(url).pathname,method:options.method,
       headers:Object.fromEntries(Object.entries(options.headers).map(([k,v])=>[k.toLowerCase(),v])),body:options.body})));
     return new Response(JSON.stringify(result.body),{status:result.status,headers:result.headers});
@@ -135,7 +135,7 @@ test('complete client workflow persists secrets privately, verifies real PHP log
     const pathname=new URL(url).pathname;calls.push(pathname);
     let response;
     if(url===f.state.endpoint){response=await f.call({body:JSON.stringify(body)});}
-    else{response=JSON.parse(await run([serviceBridge,f.installedPrivate],JSON.stringify({https:true,host:'xs366651.xsrv.jp',
+    else{response=JSON.parse(await run([serviceBridge,f.installedPrivate],JSON.stringify({https:true,host:'xs968799.xsrv.jp',
       path:pathname,method:body?'POST':'GET',ip:'192.0.2.1',headers:Object.fromEntries(Object.entries({'Content-Type':'application/json',...headers}).map(([k,v])=>[k.toLowerCase(),v])),
       body:body?JSON.stringify(body):''})));}
     if(response.status!==200)throw Error('HTTP '+response.status);

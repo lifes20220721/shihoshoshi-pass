@@ -2,7 +2,7 @@ import {execFile} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 
 const origin='https://api.xserver.ne.jp';
-const server='xs366651';
+const server='xs968799';
 
 // The credential travels through curl's stdin, never argv, URLs, source or logs.
 // No redirects: an API key must never follow an unexpected cross-host response.

@@ -11,7 +11,7 @@ const sourceGradle=fs.readFileSync(path.join(source,'app/build.gradle'),'utf8');
 if(!sourceGradle.includes('applicationId "com.shihoshoshipass.app"')||!sourceGradle.includes('    buildTypes {'))throw Error('Unexpected Android project');
 const local=JSON.parse(fs.readFileSync(path.join(root,'store-config.local.json'),'utf8'));
 const review=local.shihoshoshi?.reviewAccess;
-if(!review?.enabled||review.endpoint!=='https://xs366651.xsrv.jp/pass-review'||review.publicKey?.d)throw Error('Verified reviewer public configuration required');
+if(!review?.enabled||review.endpoint!=='https://xs968799.xsrv.jp/pass-review'||review.publicKey?.d)throw Error('Verified reviewer public configuration required');
 fs.cpSync(source,target,{recursive:true,filter:entry=>!['build','.gradle','local.properties'].includes(path.basename(entry))});
 const gradle=sourceGradle.replace('    buildTypes {','    buildTypes {\n        debug {\n            applicationIdSuffix ".reviewtest"\n            versionNameSuffix "-review-test"\n        }');
 fs.writeFileSync(path.join(target,'app/build.gradle'),gradle);

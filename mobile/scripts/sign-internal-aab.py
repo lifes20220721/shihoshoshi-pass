@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix='pass-internal-verify-', dir='/workspace
                 raise RuntimeError('Web asset did not match the bundle')
             files += 1
         script = aab.read('base/assets/public/app.js')
-        for value in [sdk_key.encode(), b'https://xs366651.xsrv.jp/pass-review', b'shihoshoshi_premium',
+        for value in [sdk_key.encode(), b'https://xs968799.xsrv.jp/pass-review', b'shihoshoshi_premium',
                       b'shihoshoshi_subscription', b'play_reviewer', b'Ed25519']:
             if value not in script:
                 raise RuntimeError('A required public app configuration or reviewer check is missing')

@@ -79,7 +79,7 @@ with zipfile.ZipFile(output) as archive:
         if any(secret in data for secret in secrets):
             raise RuntimeError('Private credential found in APK; do not distribute')
         if item.filename == 'assets/public/app.js':
-            found_endpoint = b'https://xs366651.xsrv.jp/pass-review' in data
+            found_endpoint = b'https://xs968799.xsrv.jp/pass-review' in data
 if not found_endpoint:
     raise RuntimeError('Live reviewer endpoint missing from APK')
 result = {'apk': str(output), 'packageId': 'com.shihoshoshipass.app.reviewtest',

@@ -1,6 +1,6 @@
 import {execFile} from 'node:child_process';
 
-const base='https://xs366651.xsrv.jp';
+const base='https://xs968799.xsrv.jp';
 const probes=[
   {name:'service health',path:'/pass-review/healthz',status:[200],check:body=>JSON.parse(body).ok===true},
   {name:'unauthenticated grant denied',path:'/pass-review/grant',status:[401],body:{nonce:'a'.repeat(64)}},
