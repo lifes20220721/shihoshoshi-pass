@@ -170,7 +170,12 @@ final class Installer {
         $mask = umask(0077); $lock = null;
         try {
             if (is_link($this->stateDir)) throw new RuntimeException('Invalid setup directory');
-            if (!is_dir($this->stateDir) && !mkdir($this->stateDir, 0700)) throw new RuntimeException('Cannot create setup directory');
+            if (!is_dir($this->stateDir) && !@mkdir($this->stateDir, 0700)) {
+                // Another authenticated request may create it before this request acquires the lock.
+                clearstatcache(true, $this->stateDir);
+                if (!is_dir($this->stateDir)) throw new RuntimeException('Cannot create setup directory');
+            }
+            if (is_link($this->stateDir)) throw new RuntimeException('Invalid setup directory');
             $lock = fopen($this->stateDir . '/lock', 'c');
             if (!$lock || !flock($lock, LOCK_EX)) throw new RuntimeException('Cannot lock setup');
             $state = $this->state();
