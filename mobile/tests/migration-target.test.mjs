@@ -6,7 +6,7 @@ import path from 'node:path';
 import {generateKeyPairSync,sign} from 'node:crypto';
 import {verifyReviewGrant} from '../src/reviewer-access.mjs';
 import {buildConnectPackage} from '../scripts/xserver-connect.mjs';
-test('restored old-server grants pass and paused premium-server grants fail',async()=>{
+test('standard issuer grants pass and premium issuer grants fail',async()=>{
  const {privateKey,publicKey}=generateKeyPairSync('ed25519');
  const target=JSON.parse(fs.readFileSync(new URL('../review-access.public.json',import.meta.url))).shihoshoshi;
  assert.equal(target.reviewAccessVerified,false);
@@ -22,7 +22,7 @@ test('restored old-server grants pass and paused premium-server grants fail',asy
  await verifyReviewGrant(grant(config.issuer),config,nonce);
  await assert.rejects(verifyReviewGrant(grant('https://xs366651.xsrv.jp/pass-review'),config,nonce));
 });
-test('setup artifacts remain bound to the restored standard server',t=>{
+test('setup artifacts are bound to the standard host',t=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'pass-migration-target-'));
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const built=buildConnectPackage({outputDirectory:path.join(root,'public'),privateDirectory:path.join(root,'private')});
