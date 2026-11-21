@@ -30,6 +30,6 @@ GitHubの `XSERVER_FTP_PASSWORD` は登録済みで、xs366651への暗号化FTP
 | gyoseishoshipass.com | 未作成 |
 | shihoshoshipass.com | 未作成 |
 
-新サーバーのサーバーパネルで両ドメインの設定を確認・追加する必要があります。ファイル転送・DNS切り替えは未実施です。司法書士PASS側で接続パスワードを別途登録する必要はありません。
+両ドメインの追加完了の申告後、再検査しました。FTPの一覧・直接移動とも公開フォルダは未確認で、新IPへのHTTPS接続では両ドメインの証明書名が一致しません。追加直後の反映待ちの可能性もあるため、xs366651のドメイン設定一覧と反映状態を確認します。ファイル転送・DNS切り替えは未実施です。司法書士PASS側で接続パスワードを別途登録する必要はありません。
 
-検査記録: https://github.com/lifes20220721/gyoseishoshi-pass/actions/runs/44858121221
+最新の再検査記録: https://github.com/lifes20220721/gyoseishoshi-pass/actions/runs/44859030398
