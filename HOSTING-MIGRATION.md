@@ -20,3 +20,16 @@ https://github.com/lifes20220721/gyoseishoshi-pass/blob/xserver-xs366651/hosting
 
 現時点では実転送とDNS切り替えは未完了です。接続情報の登録・配置先の確認後に一括処理を実行します。
 この資料の作成だけをもって移行済みとは扱いません。
+
+## 接続検査結果（2026年11月21日・日本時間）
+
+GitHubの `XSERVER_FTP_PASSWORD` は登録済みで、xs366651への暗号化FTP認証は成功しました。両サイトとも公開フォルダが存在せず、読み取り検査で停止しています。
+
+| ドメイン | 新サーバーの public_html |
+| --- | --- |
+| gyoseishoshipass.com | 未作成 |
+| shihoshoshipass.com | 未作成 |
+
+新サーバーのサーバーパネルで両ドメインの設定を確認・追加する必要があります。ファイル転送・DNS切り替えは未実施です。司法書士PASS側で接続パスワードを別途登録する必要はありません。
+
+検査記録: https://github.com/lifes20220721/gyoseishoshi-pass/actions/runs/44858121221
