@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {exportBackup,validateBackup,restoreBackup} from '../src/backup.mjs';
+const config={id:'shihoshoshi',storagePrefix:'shihoshoshi-pass'};
+function storage(values={}){const map=new Map(Object.entries(values));return {get length(){return map.size},key:i=>[...map.keys()][i],getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)}}
+test('backup includes learning data only, excluding purchase state and other apps',()=>{const s=storage({'shihoshoshi-pass-v03':'{"answers":[]}','pass-demo:shihoshoshi':'{}','revenuecat':'{"premium":true}','gyoseishoshi-pass:learning:v1':'{}'});const b=exportBackup(s,config);assert.deepEqual(Object.keys(b.values),['shihoshoshi-pass-v03','pass-demo:shihoshoshi']);const target=storage();restoreBackup(target,validateBackup(JSON.stringify(b),config));assert.equal(target.getItem('shihoshoshi-pass-v03'),' {"answers":[]}'.trim())});
+test('reject foreign app, invalid JSON and unexpected keys before any write',()=>{const base={format:'pass-native-backup',version:1,app:'shihoshoshi',values:{}};for(const b of [{...base,app:'gyoseishoshi'},{...base,values:{revenuecat:'{}'}},{...base,values:{'shihoshoshi-pass-v03':'bad json'}}])assert.throws(()=>validateBackup(JSON.stringify(b),config));assert.throws(()=>validateBackup('not json',config))});
+test('restore rolls back when storage writes fail',()=>{const s=storage({a:'old',b:'oldb'}),original=s.setItem;let count=0;s.setItem=(k,v)=>{if(++count===2)throw Error('quota');original(k,v)};assert.throws(()=>restoreBackup(s,{a:'new',b:'newb'}));assert.equal(s.getItem('a'),'old');assert.equal(s.getItem('b'),'oldb')});

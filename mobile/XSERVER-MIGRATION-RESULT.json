@@ -1,0 +1,52 @@
+{
+  "policy": "standard_server_unification",
+  "activeServer": "xs968799",
+  "activeEndpoint": "https://xs968799.xsrv.jp/pass-review",
+  "premiumServer": "xs366651",
+  "premiumMigrationPaused": true,
+  "rollbackSourceCompleted": true,
+  "publicKeyPreserved": true,
+  "billingConfigurationPreserved": true,
+  "githubUpdated": true,
+  "githubBranch": "codex/store-apps-preparation",
+  "pr": 1,
+  "keepPrDraft": true,
+  "merged": false,
+  "serverOperationsPerformed": false,
+  "serverConfigurationDeleted": false,
+  "dnsChanged": false,
+  "contractChanged": false,
+  "oldServerHttpsVerified": true,
+  "oldServerFilesystemInspected": false,
+  "reviewerLoginReverified": false,
+  "installedAppsUpdated": false,
+  "administrativeAppAlignment": "Both repositories record xs968799 policy; old-FTP inspection is centralized in the administrative repository. No external messages sent.",
+  "oldServerHealthStatus": 200,
+  "oldServerHealthBody": {
+    "ok": true
+  },
+  "oldServerTlsVerified": true,
+  "privateUrlChecks": [
+    {
+      "path": "/pass-review-private/accounts.json",
+      "method": "HEAD",
+      "httpStatus": 404
+    },
+    {
+      "path": "/pass-review/signing.key",
+      "method": "HEAD",
+      "httpStatus": 404
+    }
+  ],
+  "nodeTestFilesPassed": 9,
+  "webBuildPassed": true,
+  "activeEndpointInBuiltAppVerified": true,
+  "premiumEndpointAbsentFromOperationalSourceVerified": true,
+  "checkedOnJst": "2026-11-21",
+  "nodeTestCount": 32,
+  "builtReviewerUiPassed": true,
+  "browserSmokePassedBothApps": true,
+  "oldFtpRequiredSecret": "XSERVER_XS968799_FTP_PASSWORD",
+  "oldFtpInspectionStatus": "dedicated_secret_missing_no_login_attempted",
+  "androidPreviewBuildStatus": "tracked_in_latest_PR_CI"
+}

@@ -1,0 +1,18 @@
+{
+  "shihoshoshi": {
+    "revenueCat": { "ios": "", "android": "" },
+    "bundleIdsRegistered": false,
+    "monthlyAnnualProductsConfigured": false,
+    "privacyReviewed": false,
+    "storeSandboxPurchasesTested": false,
+    "nativeDevicesTested": false
+  },
+  "gyoseishoshi": {
+    "revenueCat": { "ios": "", "android": "" },
+    "bundleIdsRegistered": false,
+    "monthlyAnnualProductsConfigured": false,
+    "privacyReviewed": false,
+    "storeSandboxPurchasesTested": false,
+    "nativeDevicesTested": false
+  }
+}
