@@ -24,7 +24,13 @@
   "preflightInternalStatus": "completed",
   "localAndroidBundleRelease": "passed",
   "nodeTests": "passed",
-  "pythonTests": 76,
+  "pythonTests": 78,
   "reviewerUiTest": "passed",
-  "browserSmoke": "both apps passed"
+  "browserSmoke": "both apps passed",
+  "firstDeliveryAttempt": {
+    "run": 45561018985,
+    "result": "HTTP 400 INVALID_ARGUMENT at edit commit; not verified as delivered",
+    "productionTrackWritten": false
+  },
+  "ordinaryBuildReferralAndDiagnosticsDisabledVerified": true
 }

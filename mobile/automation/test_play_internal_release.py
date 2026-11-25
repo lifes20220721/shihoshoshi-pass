@@ -1,5 +1,7 @@
 import copy
 import json
+import io
+import urllib.error
 import unittest
 
 import play_internal_release as module
@@ -15,6 +17,7 @@ class FakeGoogle:
             {'name': 'internal v2', 'versionCodes': ['2'], 'status': 'completed'}]}]
         self.edited = copy.deepcopy(self.tracks)
         self.fail_commit = False
+        self.unsupported_flag = False
         self.alter_other_track = False
 
     def request(self, method, url, body=None, raw=False):
@@ -39,7 +42,11 @@ class FakeGoogle:
             return body
         if method == 'POST' and url.endswith(':validate'):
             return {}
-        if method == 'POST' and ':commit?' in url:
+        if method == 'POST' and ':commit' in url:
+            if self.unsupported_flag and ':commit?' in url:
+                error = module.SafeError('Google requires the query parameter to be omitted')
+                error.unsupported_review_flag = True
+                raise error
             if self.fail_commit:
                 raise module.SafeError('Google API returned HTTP 400')
             self.tracks = copy.deepcopy(self.edited)
@@ -107,12 +114,36 @@ class InternalReleaseTests(unittest.TestCase):
         self.assertTrue(result['already_available'])
         self.assertFalse(any(method == 'PUT' for method, _, _ in self.client.calls))
 
+    def test_only_explicitly_unsupported_review_flag_is_omitted(self):
+        self.client.unsupported_flag = True
+        result = module.run(self.config, self.client)
+        self.assertTrue(result['changes_committed'])
+        self.assertTrue(result['unsupported_review_flag_omitted'])
+        commits = [url for _, url, _ in self.client.calls if ':commit' in url]
+        self.assertEqual(commits, [module.PUBLISHER + '/edits/test-edit:commit?changesNotSentForReview=true',
+                                   module.PUBLISHER + '/edits/test-edit:commit'])
+        self.assertEqual(self.client.tracks[0]['releases'], [])
+
     def test_referral_or_production_request_rejected(self):
         for key, value in [('referral_benefits_enabled', True), ('track', 'production')]:
             config = dict(self.config, **{key: value})
             with self.assertRaises(module.SafeError):
                 module.run(config, self.client)
         self.assertEqual(self.client.calls, [])
+
+    def test_google_error_hint_is_bounded_and_does_not_log_message(self):
+        for message, expected in [('The query parameter changesNotSentForReview must not be set.', True),
+                                  ('Unexpected failure with private-redaction-marker', False)]:
+            class Opener:
+                def open(self, request, timeout):
+                    body = json.dumps({'error': {'status': 'INVALID_ARGUMENT', 'message': message}}).encode()
+                    raise urllib.error.HTTPError(request.full_url, 400, 'bad request', {}, io.BytesIO(body))
+            client = module.GoogleClient('synthetic-test-token')
+            client.opener = Opener()
+            with self.assertRaises(module.SafeError) as caught:
+                client.request('POST', module.PUBLISHER + '/edits/test:commit', {})
+            self.assertEqual(caught.exception.unsupported_review_flag, expected)
+            self.assertNotIn('private-redaction-marker', str(caught.exception))
 
 
 if __name__ == '__main__':

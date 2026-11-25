@@ -42,7 +42,7 @@ CI `Build Android internal test bundle` は未署名v4を作成する。これ�
 先に読み取り検査し、現在の内部トラックが完了済みv2であること、versionCode 4が衝突しないことを確認する。
 配信時は対象Driveファイルのサイズ・SHA-256と署名済みAABの形式を検査してから、internalトラックだけをv4へ更新する。
 production等の他トラックは更新せず、編集前後と確定後に一致を検査する。
-`changesNotSentForReview=true` で確定し、失敗時に別の審査送信条件へ自動再試行しない。
+まず `changesNotSentForReview=true` で確定する。Googleがこのパラメーターを指定してはいけないと明示した場合だけ、同じ編集の変更がinternalのv4のみで他トラックが不変と再確認してから、非対応パラメーターを省略する。それ以外のエラーでは条件を変えて再試行しない。
 API確定に失敗した場合は、作成済みAABとConsoleの内部テスト画面を使って利用者が進められる状態を報告する。
 テスターのリストや参加資格は変更しない。
 

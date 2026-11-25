@@ -53,15 +53,26 @@ class GoogleClient:
             # Log only bounded canonical status/reason codes, never message,
             # headers or arbitrary response fields that could contain secrets.
             reasons = []
+            unsupported_review_flag = False
             try:
                 detail = json.loads(error.read(16384)).get('error', {})
+                # Retain only a recognized API compatibility hint, never arbitrary error text.
+                message = detail.get('message', '')
+                unsupported_review_flag = error.code == 400 and isinstance(message, str) and bool(
+                    re.search(r'query parameter [\"\'`]?changesNotSentForReview[\"\'`]? must not be set', message, re.IGNORECASE))
+                if unsupported_review_flag:
+                    reasons.append('REVIEW_FLAG_UNSUPPORTED')
+                if error.code == 400 and isinstance(message, str) and 'Only releases with status draft may be created on draft app' in message:
+                    reasons.append('DRAFT_APP_REQUIRES_DRAFT_RELEASE')
                 candidates = [detail.get('status')] + [e.get('reason') for e in detail.get('errors', [])] + [e.get('reason') for e in detail.get('details', [])]
-                reasons = sorted({v for v in candidates if isinstance(v, str) and re.fullmatch(r'[A-Za-z_]{1,64}', v)})
+                reasons = sorted(set(reasons) | {v for v in candidates if isinstance(v, str) and re.fullmatch(r'[A-Za-z_]{1,64}', v)})
             except (ValueError, TypeError, AttributeError):
                 pass
             canonical = ' (' + ','.join(reasons) + ')' if reasons else ''
             hint = ' Confirm the first Play Console upload and app permissions.' if error.code in (400, 403, 404) else ''
-            raise SafeError(f'Google API returned HTTP {error.code}{canonical} for {method} {urllib.parse.urlparse(url).path}.' + hint) from None
+            failure = SafeError(f'Google API returned HTTP {error.code}{canonical} for {method} {urllib.parse.urlparse(url).path}.' + hint)
+            failure.unsupported_review_flag = unsupported_review_flag
+            raise failure from None
         except (urllib.error.URLError, TimeoutError):
             raise SafeError('Google API connection failed; no automatic publication retry was attempted') from None
 

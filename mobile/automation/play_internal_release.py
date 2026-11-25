@@ -70,15 +70,28 @@ def run(config, client):
         if snapshot_other_tracks(updated) != others:
             raise SafeError('A non-internal track changed inside the edit; no commit attempted')
         client.request('POST', base + ':validate', {})
-        # No automatic fallback that can submit unrelated pending changes for review.
-        client.request('POST', base + ':commit?changesNotSentForReview=true', {})
+        omitted_unsupported_flag = False
+        try:
+            client.request('POST', base + ':commit?changesNotSentForReview=true', {})
+        except SafeError as error:
+            if not getattr(error, 'unsupported_review_flag', False):
+                raise
+            # This edit was created here and only PUT /tracks/internal was called.
+            # Omit the flag only when Google explicitly says it must not be set.
+            retry_tracks = client.request('GET', base + '/tracks').get('tracks', [])
+            retry_internal = next((row for row in retry_tracks if row['track'] == 'internal'), {}).get('releases', [])
+            if snapshot_other_tracks(retry_tracks) != others or len(retry_internal) != 1 or retry_internal[0].get('versionCodes') != versions or retry_internal[0].get('status') != 'completed':
+                raise SafeError('Internal-only edit could not be reverified; no retry attempted')
+            client.request('POST', base + ':commit', {})
+            omitted_unsupported_flag = True
         edit = None
         edit = client.request('POST', PUBLISHER + '/edits', {})['id']
         checked = client.request('GET', PUBLISHER + '/edits/' + urllib.parse.quote(edit, safe='') + '/tracks').get('tracks', [])
         current = next((row for row in checked if row['track'] == 'internal'), {}).get('releases', [])
         if snapshot_other_tracks(checked) != others or len(current) != 1 or current[0].get('status') != 'completed' or current[0].get('versionCodes') != versions:
             raise SafeError('Commit returned but release readback differs; inspect Play Console')
-        return dict(result, changes_committed=True, internal_versions=[versions], internal_statuses=['completed'])
+        return dict(result, changes_committed=True, internal_versions=[versions], internal_statuses=['completed'],
+                    unsupported_review_flag_omitted=omitted_unsupported_flag)
     finally:
         if edit:
             try:
