@@ -59,3 +59,7 @@ API確定に失敗した場合は、作成済みAABとConsoleの内部テスト�
 8. 既存の途中位置が保たれること、審査ログイン・全教材表示を再確認する。購入操作は今回の接続テストに不要。
 
 ユーザーの実機確認が終わるまでは、時刻取得とPlayページ遷移を「実機確認済み」と記録しない。
+
+## 作成済み成果物
+
+[署名済みv4 AAB](https://drive.google.com/file/d/1RMN3qa_GkyB0zFXqo46osjq5geUtoPps/view) を作成済み。所有者と既存アップロード用サービスアカウントのreaderのみ。CIの固定コミットと45アセットが一致し、従来アップロード証明書による署名、紹介特典false、接続確認trueを検査済み。配信状態は [結果記録](ANDROID-INTERNAL-V4-RESULT.json) を参照。AABは端末へ直接入れず、Google Playの内部テスト更新で受け取る。
