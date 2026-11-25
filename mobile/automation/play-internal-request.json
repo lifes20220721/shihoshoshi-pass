@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "mode": "check",
+  "package_name": "com.shihoshoshipass.app",
+  "track": "internal",
+  "version_code": 4,
+  "previous_internal_versions": [
+    "2"
+  ],
+  "referral_benefits_enabled": false,
+  "drive_file_id": "1RMN3qa_GkyB0zFXqo46osjq5geUtoPps",
+  "sha256": "cbdf2a4612f154ea9fe046677f2079b1b8c5db948f18b00f7e451fe87cadd202",
+  "size": 7230184,
+  "source_commit": "0bbdf3f411dfde28bc9af8fb7f1c008477f6d798"
+}

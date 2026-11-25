@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "initial_console_upload_verified": true,
+  "workload_identity_provider": "projects/589479973554/locations/global/workloadIdentityPools/github-play-draft/providers/github",
+  "service_account": "play-draft-uploader@shihoshoshi-pass-ci.iam.gserviceaccount.com",
+  "package_name": "com.shihoshoshipass.app",
+  "drive_file_id": "1kzRi26ejY7tr9Pg-_H_K11Lp5HXhnGij",
+  "sha256": "1dc107e8b44819393f636b58ab1d943dee45a0e6ac28d282fa351cd174ebb59b",
+  "size": 7222263,
+  "version_code": 2,
+  "draft_name": "内部テスト v2 - Google連携・審査ログイン確認用",
+  "replace_setup_v1_draft": true
+}

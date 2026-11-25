@@ -1,0 +1,34 @@
+{
+  "shihoshoshi": {
+    "name": "司法書士PASS",
+    "bundleId": "com.shihoshoshipass.app",
+    "website": "https://shihoshoshipass.com/",
+    "repository": "lifes20220721/shihoshoshi-pass",
+    "sourceCommit": "9edfb5305aa71fafcd41b1449030bd4df8c88aed",
+    "entitlement": "shihoshoshi_premium",
+    "offering": "shihoshoshi_subscription",
+    "storagePrefix": "shihoshoshi-pass",
+    "supportEmail": "life.s.20220721@gmail.com",
+    "samplePerSubject": 10,
+    "revenueCat": {
+      "ios": "",
+      "android": "goog_hNkKnHvIzXxhhughngWycCKDLUY"
+    }
+  },
+  "gyoseishoshi": {
+    "name": "行政書士PASS",
+    "bundleId": "com.gyoseishoshipass.app",
+    "website": "https://gyoseishoshipass.com/",
+    "repository": "lifes20220721/gyoseishoshi-pass",
+    "sourceCommit": "163704eb4b847d2f5ace3246c9ea206565527766",
+    "entitlement": "gyoseishoshi_premium",
+    "offering": "gyoseishoshi_subscription",
+    "storagePrefix": "gyoseishoshi-pass",
+    "supportEmail": "life.s.20220721@gmail.com",
+    "samplePerSubject": 10,
+    "revenueCat": {
+      "ios": "",
+      "android": ""
+    }
+  }
+}

@@ -15,7 +15,7 @@ html = html.replace(/\b(src|href)="([^"]+)"/g, (whole, attr, url) => {
 });
 fs.writeFileSync(path.join(root, 'index.html'), html);
 const fixed = ['privacy.html', 'contact.html', 'sources.html', 'manifest.webmanifest',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
+  'app-icons/icon-192.png', 'app-icons/icon-512.png', 'app-icons/maskable-512.png', 'app-icons/apple-touch-icon.png'];
 const revision = hash(html + fixed.map(p => hash(read(p))).join(''));
 const core = ['./', './index.html', ...urls.values()].map(p => p.startsWith('./') ? p : './' + p);
 core.push(...fixed.map(p => './' + p));

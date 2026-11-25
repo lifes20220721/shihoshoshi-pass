@@ -1,0 +1,83 @@
+name: Build Android internal test bundle
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/play-setup-aab.yml'
+      - 'mobile/src/**'
+      - 'mobile/scripts/build.mjs'
+      - 'mobile/scripts/prepare-internal-android.mjs'
+      - 'mobile/scripts/configure-internal-connection-test.mjs'
+      - 'mobile/android-templates/**'
+      - 'mobile/review-access.public.json'
+      - 'mobile/apps.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check out this exact internal-test source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install Android build target
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - run: npm ci
+      - run: node scripts/fetch-sources.mjs
+      - run: npm test
+      - name: Build with public Android and reviewer configuration
+        run: |
+          node scripts/configure-internal-connection-test.mjs
+          npm run build
+          node tests/reviewer-ui.cjs
+      - run: npm run native -- shihoshoshi android
+      - run: node scripts/prepare-internal-android.mjs
+      - name: Build unsigned internal-test bundle
+        run: bash native/shihoshoshi/android/gradlew --no-daemon --console=plain -p native/shihoshoshi/android bundleRelease
+      - name: Collect bundle and verification inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/internal-v4
+          cp native/shihoshoshi/android/app/build/outputs/bundle/release/app-release.aab out/internal-v4/unsigned.aab
+          cp native/shihoshoshi/android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml out/internal-v4/AndroidManifest.xml
+          cp apps.json review-access.public.json out/internal-v4/
+          tar -czf out/internal-v4/built-web-assets.tar.gz -C dist/shihoshoshi .
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          Path('out/internal-v4/build-provenance.json').write_text(json.dumps({
+              'repository':'lifes20220721/shihoshoshi-pass',
+              'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+              'package':'com.shihoshoshipass.app','version_code':4,'version_name':'1.2.0-internal',
+              'purpose':'Internal test candidate; no upload or release performed',
+              'purchases_tested':False,'released':False},indent=2)+'\n')
+          PY
+          cd out/internal-v4
+          sha256sum unsigned.aab AndroidManifest.xml apps.json review-access.public.json built-web-assets.tar.gz build-provenance.json > SHA256SUMS
+      - name: Save internal-test build for local signing
+        uses: actions/upload-artifact@v4
+        with:
+          name: shihoshoshi-internal-v4-unsigned
+          path: mobile/out/internal-v4/
+          if-no-files-found: error
+          retention-days: 7

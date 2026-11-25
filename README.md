@@ -7,7 +7,7 @@
 
 ## Ver.2.0.0 の構成
 
-行政書士PASSと同様に、HTML・CSS・JavaScript・教材データを分離しています。実行にサーバー側プログラムやフレームワークのビルドは必要ありません。GitHub Pagesでそのまま配信できます。
+行政書士PASSと同様に、HTML・CSS・JavaScript・教材データを分離しています。実行にサーバー側プログラムやフレームワークのビルドは必要ありません。現在の公開先はXServerのxs968799です。GitHubへの反映と本番配置は別工程です。[XServer更新・バックアップ・切り戻し手順](docs/XSERVER-UPDATE.md)に従ってください。
 
 | ファイル | 編集する内容 |
 | --- | --- |
@@ -43,6 +43,8 @@
 3. `npm test` を実行します。依存ライブラリのインストールは不要です（Node.js 18以上）。
 4. `python3 -m http.server 8000` を実行し、`http://localhost:8000/` で確認します。
 5. 変更したファイルと更新後の `index.html`・`service-worker.js` をGitHubへ反映します。
+
+XServer向けには `npm run package:xserver` で明示リストにある78ファイルだけをZIPとSHA-256一覧へまとめます。公開画像は `app-icons/` を使います。旧 `icons/` は履歴互換のためソースに保持しますが、XServer向けZIPには含めません。CIは成果物作成までで、本番への自動配置は行いません。
 
 実ブラウザテスト：PlaywrightとChromiumを用意し、`npm run test:browser` を実行します。必要なら `CHROMIUM_PATH` でChromiumの場所を指定します。旧版の完全な公開ファイルを用意できる場合は、`BASELINE_ROOT=/path/to/v1.9.2 npm run test:browser` で実際の更新・履歴移行も確認できます。
 

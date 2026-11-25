@@ -1,7 +1,7 @@
 'use strict';
 // Generated service-worker.js is committed for direct GitHub Pages hosting.
 const CACHE_PREFIX = 'shihoshoshi-pass-';
-const CACHE_NAME = 'shihoshoshi-pass-v2-3420df318baf9e0d';
+const CACHE_NAME = 'shihoshoshi-pass-v2-8aa6b9852b9d018d';
 const CORE_FILES = [
   "./",
   "./index.html",
@@ -43,10 +43,10 @@ const CORE_FILES = [
   "./contact.html",
   "./sources.html",
   "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/maskable-512.png",
-  "./icons/apple-touch-icon.png"
+  "./app-icons/icon-192.png",
+  "./app-icons/icon-512.png",
+  "./app-icons/maskable-512.png",
+  "./app-icons/apple-touch-icon.png"
 ];
 
 self.addEventListener('install', event => {

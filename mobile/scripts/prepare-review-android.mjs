@@ -1,0 +1,27 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const source=path.join(root,'native/shihoshoshi/android');
+const target=path.join(root,'native/shihoshoshi/android-review-test');
+const packageId='com.shihoshoshipass.app.reviewtest';
+if(fs.existsSync(target))throw Error('The separate review-test project already exists; build it in place.');
+const sourceGradle=fs.readFileSync(path.join(source,'app/build.gradle'),'utf8');
+if(!sourceGradle.includes('applicationId "com.shihoshoshipass.app"')||!sourceGradle.includes('    buildTypes {'))throw Error('Unexpected Android project');
+const local=JSON.parse(fs.readFileSync(path.join(root,'store-config.local.json'),'utf8'));
+const review=local.shihoshoshi?.reviewAccess;
+if(!review?.enabled||review.endpoint!=='https://xs968799.xsrv.jp/pass-review'||review.publicKey?.d)throw Error('Verified reviewer public configuration required');
+fs.cpSync(source,target,{recursive:true,filter:entry=>!['build','.gradle','local.properties'].includes(path.basename(entry))});
+const gradle=sourceGradle.replace('    buildTypes {','    buildTypes {\n        debug {\n            applicationIdSuffix ".reviewtest"\n            versionNameSuffix "-review-test"\n        }');
+fs.writeFileSync(path.join(target,'app/build.gradle'),gradle);
+const strings=path.join(target,'app/src/main/res/values/strings.xml');
+let xml=fs.readFileSync(strings,'utf8');
+for(const name of ['app_name','title_activity_main'])xml=xml.replace(new RegExp('(<string name="'+name+'">)[^<]*(</string>)'),'$1司法書士PASS（確認用）$2');
+for(const name of ['package_name','custom_url_scheme'])xml=xml.replace(new RegExp('(<string name="'+name+'">)[^<]*(</string>)'),'$1'+packageId+'$2');
+fs.writeFileSync(strings,xml);
+const wrapper=path.join(target,'gradle/wrapper/gradle-wrapper.properties');
+fs.writeFileSync(wrapper,fs.readFileSync(wrapper,'utf8').replace('gradle-8.14.3-all.zip','gradle-8.14.3-bin.zip'));
+const result={project:target,packageId,displayName:'司法書士PASS（確認用）',reviewEndpoint:review.endpoint,productionProjectChanged:false};
+fs.writeFileSync(path.join(target,'.pass-review-test-build.json'),JSON.stringify(result,null,2));
+console.log(JSON.stringify(result));
