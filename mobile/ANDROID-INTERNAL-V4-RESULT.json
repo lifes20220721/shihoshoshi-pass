@@ -15,7 +15,7 @@
   "referralBenefitsEnabled": false,
   "connectionTestEnabled": true,
   "nativeDeviceClockVerified": false,
-  "playInternalDelivered": false,
+  "playInternalDelivered": true,
   "productionReleased": false,
   "driveFileId": "1RMN3qa_GkyB0zFXqo46osjq5geUtoPps",
   "driveSharing": "owner plus existing uploader reader; no public sharing",
@@ -32,5 +32,14 @@
     "result": "HTTP 400 INVALID_ARGUMENT at edit commit; not verified as delivered",
     "productionTrackWritten": false
   },
-  "ordinaryBuildReferralAndDiagnosticsDisabledVerified": true
+  "ordinaryBuildReferralAndDiagnosticsDisabledVerified": true,
+  "playInternalVersion": 4,
+  "playInternalStatus": "completed",
+  "playDeliveryRun": 45562083906,
+  "playDeliveryJob": 139028030286,
+  "playReleaseReadbackVerified": true,
+  "productionTrackWritten": false,
+  "otherTracksUnchangedVerified": true,
+  "unsupportedReviewFlagOmitted": true,
+  "relatedPlayDeviceVerified": false
 }

@@ -40,3 +40,7 @@ Nodeテスト8ファイルが成功。両アプリのアプリ制御テストで
 両bundleReleaseが成功。既存アップロード証明書で署名し、署名、releaseのpackage/version、全Webアセットの一致、秘密情報非混入を確認。Driveは所有者のみの共有。Google Playには未アップロード。
 
 利用者のPlay Console画像で行政書士PASSの登録と「最新のApp Bundle: なし」を確認した。実際の配信とインストール確認はこれから。
+
+## 2026-11-25：紹介特典を無効にした接続確認版
+
+内部テストv4（1.2.0-internal）は紹介特典falseのまま、アプリ間リンクと独立したサーバー時刻取得の診断画面を追加して配信した。v3の紹介特典有効ビルドは配信していない。[v4の手順と結果](ANDROID-INTERNAL-CONNECTION-TEST.md)を参照。

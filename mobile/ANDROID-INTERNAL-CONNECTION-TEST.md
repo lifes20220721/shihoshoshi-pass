@@ -63,3 +63,7 @@ API確定に失敗した場合は、作成済みAABとConsoleの内部テスト�
 ## 作成済み成果物
 
 [署名済みv4 AAB](https://drive.google.com/file/d/1RMN3qa_GkyB0zFXqo46osjq5geUtoPps/view) を作成済み。所有者と既存アップロード用サービスアカウントのreaderのみ。CIの固定コミットと45アセットが一致し、従来アップロード証明書による署名、紹介特典false、接続確認trueを検査済み。配信状態は [結果記録](ANDROID-INTERNAL-V4-RESULT.json) を参照。AABは端末へ直接入れず、Google Playの内部テスト更新で受け取る。
+
+## 配信結果（2026-11-25）
+
+[内部テスト配信](https://github.com/lifes20220721/shihoshoshi-pass/actions/runs/45562083906)が成功し、APIの読み戻しでinternalのversionCode 4・status completedを確認した。他トラックが不変であることも確認した。最初の確定はHTTP400で拒否されたが、GoogleがchangesNotSentForReviewを指定不可と明示したため、内部トラック単独の変更を再確認してそのパラメーターだけを省略し、確定できた。配信後は実行要求をdisabledに戻す。テスター一覧・本番トラック・課金設定・XServer・DNS・SSLは変更していない。利用者の実機での時刻取得とPlayリンク遷移は、更新後に確認する。
