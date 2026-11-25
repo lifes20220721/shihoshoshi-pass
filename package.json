@@ -6,7 +6,10 @@
   "scripts": {
     "prepare:release": "node scripts/prepare-release.cjs",
     "test": "node tests/content.cjs && node tests/resume.cjs",
-    "test:browser": "node tests/browser.cjs"
+    "test:browser": "node tests/browser.cjs",
+    "package:xserver": "node scripts/package-xserver.cjs"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
