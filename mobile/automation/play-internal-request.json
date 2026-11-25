@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "mode": "check",
+  "package_name": "com.shihoshoshipass.app",
+  "track": "internal",
+  "version_code": 4,
+  "previous_internal_versions": [
+    "2"
+  ],
+  "referral_benefits_enabled": false
+}

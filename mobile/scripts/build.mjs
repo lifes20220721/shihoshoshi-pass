@@ -55,6 +55,8 @@ for(const[id,app]of Object.entries(apps)) {
   const config={...app,id,revenueCat:{...app.revenueCat,...local[id]?.revenueCat}};
   // Remains disabled until both Play installs and trial abuse/replay behavior are verified.
   config.referralTrialEnabled=local[id]?.referralTrialEnabled===true;
+  config.connectionTestEnabled=local[id]?.connectionTestEnabled===true;
+  if(config.connectionTestEnabled && config.referralTrialEnabled)throw Error('Connection-only internal tests must keep referral benefits disabled');
   if(id==='shihoshoshi'&&local[id]?.reviewAccess) {
     const r=local[id].reviewAccess;
     config.reviewAccess={enabled:r.enabled===true,endpoint:r.endpoint,issuer:r.issuer,audience:r.audience,keyId:r.keyId,publicKey:r.publicKey};

@@ -1,4 +1,4 @@
-name: Check or save Play internal draft
+name: Manage approved Play internal tests
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       mode:
         description: 'connection = auth/file only; check = Play preflight; draft = internal draft only'
         type: choice
-        options: ['connection', 'check', 'draft', 'catalog-check', 'catalog-draft', 'billing-credentials']
+        options: ['connection', 'check', 'draft', 'catalog-check', 'catalog-draft', 'billing-credentials', 'internal-connection']
         default: 'connection'
 
 permissions:
@@ -45,7 +45,7 @@ jobs:
           cfg = json.loads(Path('mobile/automation/play-draft-config.json').read_text())
           request = json.loads(Path('mobile/automation/play-draft-request.json').read_text())
           mode = os.environ.get('REQUESTED_MODE') or request.get('mode', 'connection')
-          if mode not in ('connection', 'check', 'draft', 'catalog-check', 'catalog-draft', 'billing-credentials'):
+          if mode not in ('connection', 'check', 'draft', 'catalog-check', 'catalog-draft', 'billing-credentials', 'internal-connection'):
               raise SystemExit('Unsupported automation mode')
           if cfg['enabled'] and (not cfg['workload_identity_provider'] or not cfg['service_account']):
               raise SystemExit('Complete keyless account configuration before enabling')
@@ -85,6 +85,9 @@ jobs:
           MODE: ${{ needs.validate.outputs.mode }}
         run: |
           case "$MODE" in
+            internal-connection)
+              python mobile/automation/play_internal_release.py --config mobile/automation/play-internal-request.json
+              ;;
             catalog-check|catalog-draft)
               python mobile/automation/play_subscription_setup.py --config mobile/automation/play-subscription-config.json --mode "$MODE"
               ;;

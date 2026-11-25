@@ -18,6 +18,39 @@ import java.util.UUID;
 
 @CapacitorPlugin(name = "PassInstallReferrer")
 public class ReferralPlugin extends Plugin {
+    private static final String CLOCK_ENDPOINT = "https://xs968799.xsrv.jp/pass-review/healthz";
+
+    // Independent of Play attribution; this method never grants a free trial.
+    @PluginMethod
+    public void trustedTime(PluginCall call) {
+        fetchClock(call, new JSObject());
+    }
+
+    private void fetchClock(PluginCall call, JSObject data) {
+        new Thread(() -> {
+            HttpsURLConnection connection = null;
+            try {
+                URL url = new URL(CLOCK_ENDPOINT + "?clock=" + UUID.randomUUID());
+                connection = (HttpsURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestMethod("HEAD");
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Cache-Control", "no-cache, no-store");
+                if (connection.getResponseCode() != 200 || connection.getDate() <= 0) {
+                    call.reject("Trusted trial time unavailable");
+                    return;
+                }
+                data.put("trustedNow", connection.getDate());
+                data.put("endpoint", CLOCK_ENDPOINT);
+                call.resolve(data);
+            } catch (Exception error) {
+                call.reject("Could not verify server time", error);
+            } finally { if (connection != null) connection.disconnect(); }
+        }, "pass-server-clock").start();
+    }
+
     @PluginMethod
     public void read(PluginCall call) {
         InstallReferrerClient client = InstallReferrerClient.newBuilder(getContext()).build();
@@ -50,27 +83,7 @@ public class ReferralPlugin extends Plugin {
                     data.put("installedAt", seconds * 1000);
                     // Obtain wall time through TLS, then the web layer advances it
                     // with a monotonic clock. Device date changes do not extend a trial.
-                    new Thread(() -> {
-                        HttpsURLConnection connection = null;
-                        try {
-                            URL url = new URL("https://xs968799.xsrv.jp/pass-review/healthz?clock=" + UUID.randomUUID());
-                            connection = (HttpsURLConnection) url.openConnection();
-                            connection.setInstanceFollowRedirects(false);
-                            connection.setRequestMethod("HEAD");
-                            connection.setConnectTimeout(5000);
-                            connection.setReadTimeout(5000);
-                            connection.setUseCaches(false);
-                            connection.setRequestProperty("Cache-Control", "no-cache, no-store");
-                            if (connection.getResponseCode() != 200 || connection.getDate() <= 0) {
-                                call.reject("Trusted trial time unavailable");
-                                return;
-                            }
-                            data.put("trustedNow", connection.getDate());
-                            call.resolve(data);
-                        } catch (Exception error) {
-                            call.reject("Could not verify trial time", error);
-                        } finally { if (connection != null) connection.disconnect(); }
-                    }, "pass-trial-clock").start();
+                    fetchClock(call, data);
                 } catch (RemoteException | RuntimeException error) {
                     call.reject("Could not read Google Play install referrer", error);
                 } finally { client.endConnection(); }

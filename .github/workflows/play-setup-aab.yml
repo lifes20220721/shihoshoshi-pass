@@ -7,6 +7,8 @@ on:
       - 'mobile/src/**'
       - 'mobile/scripts/build.mjs'
       - 'mobile/scripts/prepare-internal-android.mjs'
+      - 'mobile/scripts/configure-internal-connection-test.mjs'
+      - 'mobile/android-templates/**'
       - 'mobile/review-access.public.json'
       - 'mobile/apps.json'
   workflow_dispatch:
@@ -44,7 +46,7 @@ jobs:
       - run: npm test
       - name: Build with public Android and reviewer configuration
         run: |
-          cp review-access.public.json store-config.local.json
+          node scripts/configure-internal-connection-test.mjs
           npm run build
           node tests/reviewer-ui.cjs
       - run: npm run native -- shihoshoshi android
@@ -55,27 +57,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out/internal-v2
-          cp native/shihoshoshi/android/app/build/outputs/bundle/release/app-release.aab out/internal-v2/unsigned.aab
-          cp native/shihoshoshi/android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml out/internal-v2/AndroidManifest.xml
-          cp apps.json review-access.public.json out/internal-v2/
-          tar -czf out/internal-v2/built-web-assets.tar.gz -C dist/shihoshoshi .
+          mkdir -p out/internal-v4
+          cp native/shihoshoshi/android/app/build/outputs/bundle/release/app-release.aab out/internal-v4/unsigned.aab
+          cp native/shihoshoshi/android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml out/internal-v4/AndroidManifest.xml
+          cp apps.json review-access.public.json out/internal-v4/
+          tar -czf out/internal-v4/built-web-assets.tar.gz -C dist/shihoshoshi .
           python - <<'PY'
           import json, subprocess
           from pathlib import Path
-          Path('out/internal-v2/build-provenance.json').write_text(json.dumps({
+          Path('out/internal-v4/build-provenance.json').write_text(json.dumps({
               'repository':'lifes20220721/shihoshoshi-pass',
               'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
-              'package':'com.shihoshoshipass.app','version_code':2,'version_name':'1.1.0-internal',
+              'package':'com.shihoshoshipass.app','version_code':4,'version_name':'1.2.0-internal',
               'purpose':'Internal test candidate; no upload or release performed',
               'purchases_tested':False,'released':False},indent=2)+'\n')
           PY
-          cd out/internal-v2
+          cd out/internal-v4
           sha256sum unsigned.aab AndroidManifest.xml apps.json review-access.public.json built-web-assets.tar.gz build-provenance.json > SHA256SUMS
       - name: Save internal-test build for local signing
         uses: actions/upload-artifact@v4
         with:
-          name: shihoshoshi-internal-v2-unsigned
-          path: mobile/out/internal-v2/
+          name: shihoshoshi-internal-v4-unsigned
+          path: mobile/out/internal-v4/
           if-no-files-found: error
           retention-days: 7

@@ -8,6 +8,7 @@ import {Purchases} from '@revenuecat/purchases-capacitor';
 import {Billing} from './billing.mjs';
 import {ReviewerAccess,canStudy} from './reviewer-access.mjs';
 import {ReferralAccess} from './referral-trial.mjs';
+import {checkServerClock, clockEndpoint} from './connection-test.mjs';
 import {exportBackup, validateBackup, restoreBackup, allowedKey} from './backup.mjs';
 import config from 'app-config';
 import sample from 'sample-data';
@@ -25,6 +26,7 @@ const billing = new Billing({sdk: Purchases, platform: Capacitor.getPlatform(), 
 const reviewer = new ReviewerAccess({config:config.reviewAccess,onChange:billingChanged});
 const referral = new ReferralAccess({app:config.id,plugin:registerPlugin('PassInstallReferrer'),onChange:billingChanged});
 const referralEnabled = native && Capacitor.getPlatform()==='android' && config.referralTrialEnabled===true;
+const connectionTestEnabled = native && Capacitor.getPlatform()==='android' && config.connectionTestEnabled===true;
 const fullAccess = () => canStudy(billing,reviewer) || (referralEnabled && referral.active);
 function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 6500); }
 function action(id, callback) { const element=$(id); if(element) element.onclick=()=>Promise.resolve().then(callback).catch(e=>toast(e.message||'操作を完了できませんでした。')); }
@@ -111,6 +113,17 @@ async function openExternal(href) {
 function settings() {
   page('settings',`<h2>学習を続ける設定</h2>${reviewer.enabled?'<section class="card"><h3>審査用アクセス / Reviewer access</h3><p>運営者が発行した審査用アカウントをお持ちの方はこちらから認証できます。通常の購読には影響しません。</p><button id="reviewerAccess">審査用アクセス / Reviewer access</button></section>':''}<section class="card"><h3>毎日の学習通知</h3><p>指定した時間に、この端末へ学習を促す通知を表示します。通知を有効にする際に許可を求めます。</p><label>通知時刻 <input id="reminderTime" type="time" value="20:00"></label><div class="actions"><button id="reminder" ${native?'':'disabled'}>この時間に通知する</button><button id="cancelReminder" ${native?'':'disabled'}>通知を停止する</button></div></section><section class="card"><h3>学習記録</h3><p>履歴はこの端末に保存されます。機種変更や再インストールの前にバックアップしてください。購読の復元と学習記録の復元は別です。</p><div class="actions"><button id="export">バックアップを保存・共有</button><button id="import">バックアップから復元</button><button id="clear">学習記録を削除</button></div><p class="muted">Web版のバックアップは、全機能の学習画面にある既存のバックアップ機能から取り込めます。ブラウザからアプリへ履歴が自動で移ることはありません。</p></section>${footer()}`);
   action('reviewerAccess',reviewerPage);
+  if(connectionTestEnabled) {
+    $('main').querySelector('footer').insertAdjacentHTML('beforebegin', `<section class="card"><h3>接続確認（内部テスト）</h3><p>取得先：${esc(clockEndpoint)}</p><p>紹介特典は無効です。この確認で学習権限や購入状態は変わりません。</p><button id="clockCheck">サーバー時刻を確認する</button><p id="clockResult" role="status">未確認</p></section>`);
+    action('clockCheck',async()=>{
+      const button=$('clockCheck'),status=$('clockResult');button.disabled=true;status.textContent='確認中…';
+      try {
+        const result=await checkServerClock(registerPlugin('PassInstallReferrer'));
+        status.textContent='取得成功：'+new Date(result.trustedNow).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';
+      } catch {status.textContent='取得失敗：通信状況を確認し、もう一度お試しください。';}
+      finally {button.disabled=false;}
+    });
+  }
   action('reminder',async()=>{const time=$('reminderTime').value;if(!/^\d{2}:\d{2}$/.test(time))throw Error('通知時刻を選んでください。');const permission=await LocalNotifications.requestPermissions();if(permission.display!=='granted')throw Error('通知が許可されていません。端末の設定をご確認ください。');const[hour,minute]=time.split(':').map(Number);await LocalNotifications.cancel({notifications:[{id:1001}]});await LocalNotifications.schedule({notifications:[{id:1001,title:config.name,body:'今日も一問から、学習を始めましょう。',schedule:{on:{hour,minute},repeats:true}}]});toast('学習通知を設定しました。端末の省電力設定などにより時刻が前後する場合があります。');});
   action('cancelReminder',async()=>{await LocalNotifications.cancel({notifications:[{id:1001}]});toast('通知を停止しました。');});
   action('export',async()=>{const text=JSON.stringify(exportBackup(localStorage,config),null,2),filename=`${config.id}-backup-${Date.now()}.json`;if(native){const file=await Filesystem.writeFile({path:filename,data:text,directory:Directory.Cache,encoding:Encoding.UTF8});await Share.share({title:'学習記録のバックアップ',files:[file.uri]});}else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}});

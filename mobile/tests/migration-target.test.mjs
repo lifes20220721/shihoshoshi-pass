@@ -35,6 +35,7 @@ test('setup artifacts are bound to the standard host',t=>{
 
 test('both Android apps use the restored old-server clock endpoint',()=>{
  const plugin=fs.readFileSync(new URL('../android-templates/ReferralPlugin.java',import.meta.url),'utf8');
- assert(plugin.includes('https://xs968799.xsrv.jp/pass-review/healthz?clock='));
+ assert(plugin.includes('https://xs968799.xsrv.jp/pass-review/healthz'));
+ assert(plugin.includes('CLOCK_ENDPOINT + "?clock="'));
  assert(!plugin.includes('xs366651'));
 });

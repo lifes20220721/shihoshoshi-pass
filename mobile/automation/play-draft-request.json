@@ -1,1 +1,4 @@
-{"mode":"catalog-check","request":5}
+{
+  "mode": "internal-connection",
+  "request": 6
+}
